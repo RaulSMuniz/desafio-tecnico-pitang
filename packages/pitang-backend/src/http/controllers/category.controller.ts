@@ -38,7 +38,7 @@ export async function postCategory(req: Request, res: Response, next: NextFuncti
             });
         }
 
-        await prisma.category.create({
+        const category = await prisma.category.create({
             data: {
                 nome,
             }
@@ -46,7 +46,8 @@ export async function postCategory(req: Request, res: Response, next: NextFuncti
 
         return res.status(201).json({
             message: "Categoria criada com sucesso",
-            statusCode: 201
+            statusCode: 201,
+            data: category
         });
 
     } catch (error) {

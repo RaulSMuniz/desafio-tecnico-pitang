@@ -11,7 +11,7 @@ import { ensureAuthenticated } from '../middlewares/auth.middleware.js';
 import { Role } from '@prisma/client';
 
 const userRouter = express.Router();
-userRouter.post('/login', login);
+userRouter.post('/auth/login', login);
 
 userRouter.use(ensureAuthenticated);
 

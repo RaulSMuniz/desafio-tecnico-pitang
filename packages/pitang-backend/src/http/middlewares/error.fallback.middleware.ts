@@ -17,10 +17,10 @@ export function errorFallbackMiddleware(
         });
     }
 
-    const status = error.status || 400;
+    const status = error.status || 500;
     response.status(status).json({
         message: error.message || "Something went wrong",
         statusCode: status,
-        error: status === 401 ? "Unauthorized" : status === 403 ? "Forbidden" : "Bad Request"
+        error: status === 401 ? "Unauthorized" : status === 403 ? "Forbidden" : status === 400 ? "Bad Request" : status === 500 ? "Internal Server Error" : "Bad Request"
     });
 }

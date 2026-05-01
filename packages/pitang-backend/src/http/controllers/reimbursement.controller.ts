@@ -83,7 +83,7 @@ export async function postReimbursement(req: Request, res: Response, next: NextF
             });
         }
 
-        await prisma.reimbursement.create({
+        const reimbursement = await prisma.reimbursement.create({
             data: {
                 descricao,
                 valor,
@@ -100,11 +100,11 @@ export async function postReimbursement(req: Request, res: Response, next: NextF
             }
         });
 
-        return res.status(201).json({
+        return res.status(200).json({
             message: "Reembolso criado com sucesso",
-            statusCode: 201
+            statusCode: 200,
+            data: reimbursement
         });
-
     } catch (error) {
         next(error)
     }
@@ -301,9 +301,9 @@ export async function submitReimbursement(req: Request, res: Response, next: Nex
             }
         })
 
-        return res.status(201).json({
+        return res.status(200).json({
             message: "Reembolso enviado com sucesso",
-            statusCode: 201
+            statusCode: 200
         });
 
     } catch (error) {
@@ -327,7 +327,7 @@ export async function cancelReimbursement(req: Request, res: Response, next: Nex
             return res.status(400).json({ message: "Status não permite cancelamento", statusCode: 400 });
         }
 
-        await prisma.reimbursement.update({
+        const updatedReimbursement = await prisma.reimbursement.update({
             where: { id },
             data: {
                 status: "CANCELADO",
@@ -337,6 +337,6 @@ export async function cancelReimbursement(req: Request, res: Response, next: Nex
             }
         });
 
-        return res.json({ message: "Cancelado com sucesso", statusCode: 200 });
+        return res.json({ message: "Cancelado com sucesso", statusCode: 200, data: updatedReimbursement });
     } catch (error) { next(error); }
 }

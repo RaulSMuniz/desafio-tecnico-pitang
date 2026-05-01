@@ -12,7 +12,7 @@ const attachmentRouter = express.Router();
 attachmentRouter.use(ensureAuthenticated);
 
 attachmentRouter.post(
-    "/reimbursements/:id/attachment",
+    "/reimbursements/:id/attachments",
     roleRestrictedMiddleware([Role.COLABORADOR, Role.GESTOR, Role.FINANCEIRO, Role.ADMIN]),
     postAttachmentSimulated
 );
