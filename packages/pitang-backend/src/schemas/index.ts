@@ -24,6 +24,15 @@ export const reimbursementSchema = z.object({
     anexos: z.array(z.string()).optional(),
 })
 
+export const rejectionSchema = z.object({
+    justificativaRejeicao: z.string().min(5, "A justificativa deve ter pelo menos 5 caracteres"),
+});
+
+
+export const attachmentSchema = z.object({
+    nomeArquivo: z.string(),
+    tipoArquivo: z.string(),
+})
 
 export const paginationQuery = z.object({
     page: z.coerce.number().default(1),

@@ -7,6 +7,8 @@ import { authMiddleware } from "./http/middlewares/auth.middleware.js";
 import userRouter from "./http/routes/user.routes.js";
 import categoryRouter from "./http/routes/category.routes.js";
 import reimbursementRouter from "./http/routes/reimbuserment.routes.js";
+import analysisRouter from "./http/routes/analysis.routes.js";
+import attachmentRouter from "./http/routes/attachment.routes.js";
 
 const app = express();
 
@@ -22,12 +24,11 @@ app.use(morgan('combined'));
 
 app.use(helmet());
 
-app.use(authMiddleware);
-
 app.use(userRouter);
 app.use(categoryRouter);
 app.use(reimbursementRouter);
-
+app.use(analysisRouter);
+app.use(attachmentRouter);
 
 app.use(errorFallbackMiddleware);
 

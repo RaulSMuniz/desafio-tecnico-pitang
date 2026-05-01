@@ -57,10 +57,11 @@ export async function ensureAuthenticated(req: Request, res: Response, next: Nex
     const [, token] = authHeader.split(" ");
 
     try {
-        const decoded = jsonwebtoken.verify(token || "", env.JWT_SECRET) as { sub: string };
+        const decoded = jsonwebtoken.verify(token || "", env.JWT_SECRET) as { sub: string, perfil: string };
 
         req.user = {
             id: decoded.sub,
+            perfil: decoded.perfil
         };
 
         return next();

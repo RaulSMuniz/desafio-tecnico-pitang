@@ -1,19 +1,26 @@
 import type { NextFunction, Request, Response } from "express";
-import { env } from "../../core/EnvVars.js";
+import { z } from "zod";
 
 export function errorFallbackMiddleware(
-    error: Error,
+    error: any,
     request: Request,
     response: Response,
     next: NextFunction,
 ) {
-    console.error(error.stack);
+    console.error(error);
 
-    if (env.NODE_ENV === "development") {
-        return response
-            .status(400)
-            .json({ message: "Something went wrong", stack: error });
+    if (error instanceof z.ZodError) {
+        return response.status(400).json({
+            message: "Dados de entrada inválidos",
+            statusCode: 400,
+            error: "Bad Request"
+        });
     }
 
-    response.status(400).json({ message: "Something went wrong" });
+    const status = error.status || 400;
+    response.status(status).json({
+        message: error.message || "Something went wrong",
+        statusCode: status,
+        error: status === 401 ? "Unauthorized" : status === 403 ? "Forbidden" : "Bad Request"
+    });
 }
