@@ -1,0 +1,110 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+enum Role {
+  COLABORADOR
+  GESTOR
+  FINANCEIRO
+  ADMIN
+}
+
+enum Status {
+  RASCUNHO
+  ENVIADO
+  APROVADO
+  REJEITADO
+  PAGO
+  CANCELADO
+}
+
+enum Action {
+  CREATED
+  UPDATED
+  SUBMITTED
+  APPROVED
+  REJECTED
+  PAID
+  CANCELED
+}
+
+model User {
+  id           String   @id @default(uuid())
+  nome         String
+  email        String   @unique
+  senha        String
+  perfil       Role     @default(COLABORADOR)
+  criadoEm     DateTime @default(now())
+  atualizadoEm DateTime @updatedAt
+
+  solicitacoes Reimbursement[]
+  historicos   History[]
+
+  @@map("users")
+}
+
+model Category {
+  id           Int      @id @default(autoincrement())
+  nome         String   @unique
+  ativo        Boolean  @default(true)
+  criadoEm     DateTime @default(now())
+  atualizadoEm DateTime @updatedAt
+
+  solicitacoes Reimbursement[]
+
+  @@map("categories")
+}
+
+model Reimbursement {
+  id                    String   @id @default(uuid())
+  descricao             String
+  valor                 Float
+  dataDespesa           DateTime
+  status                Status   @default(RASCUNHO)
+  justificativaRejeicao String?
+  criadoEm              DateTime @default(now())
+  atualizadoEm          DateTime @updatedAt
+
+  solicitanteId String
+  solicitante   User   @relation(fields: [solicitanteId], references: [id])
+
+  categoriaId Int
+  categoria   Category @relation(fields: [categoriaId], references: [id])
+
+  anexos     Attachment[]
+  historicos History[]
+
+  @@map("reimbursements")
+}
+
+model Attachment {
+  id          String   @id @default(uuid())
+  nomeArquivo String
+  urlArquivo  String
+  tipoArquivo String
+  criadoEm    DateTime @default(now())
+
+  solicitacaoId String
+  solicitacao   Reimbursement @relation(fields: [solicitacaoId], references: [id], onDelete: Cascade)
+
+  @@map("attachments")
+}
+
+model History {
+  id         String   @id @default(uuid())
+  acao       Action
+  observacao String
+  criadoEm   DateTime @default(now())
+
+  solicitacaoId String
+  solicitacao   Reimbursement @relation(fields: [solicitacaoId], references: [id], onDelete: Cascade)
+
+  usuarioId String
+  usuario   User   @relation(fields: [usuarioId], references: [id])
+
+  @@map("reimbursement_history")
+}

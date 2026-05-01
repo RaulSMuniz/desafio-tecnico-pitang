@@ -1,0 +1,6 @@
+# Ignorar dependências e arquivos de ambiente
+node_modules/
+.env
+
+# Ignorar especificamente o frontend dentro de packages
+packages/pitang-frontend/

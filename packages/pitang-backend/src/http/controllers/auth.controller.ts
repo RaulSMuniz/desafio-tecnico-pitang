@@ -1,0 +1,69 @@
+import type { Request, Response, NextFunction } from "express";
+import { loginSchema } from "../../schemas/index.js";
+import z from "zod";
+import bcrypt from "bcryptjs";
+import jsonwebtoken from "jsonwebtoken";
+import { prisma } from "../../core/PrismaClient.js";
+import { env } from "../../core/EnvVars.js";
+
+/**
+ * POST /auth/login
+ */
+export async function login(req: Request, res: Response, next: NextFunction) {
+    try {
+        const result = loginSchema.safeParse(req.body);
+
+        if (!result.success) {
+            return res.status(400).json({
+                message: "Dados de login inválidos",
+                errors: z.treeifyError(result.error),
+                statusCode: 400
+            });
+        }
+
+        const { email, senha } = result.data;
+
+        const user = await prisma.user.findUnique({
+            where: { email }
+        });
+
+        if (!user) {
+            return res.status(401).json({
+                message: "Credenciais inválidas",
+                statusCode: 401
+            });
+        }
+
+        const isPasswordValid = await bcrypt.compare(senha, user.senha);
+
+        if (!isPasswordValid) {
+            return res.status(401).json({
+                message: "Credenciais inválidas",
+                statusCode: 401
+            });
+        }
+        const token = jsonwebtoken.sign(
+            {
+                sub: user.id,
+                perfil: user.perfil
+            },
+            env.JWT_SECRET,
+            {
+                expiresIn: '1h'
+            }
+        );
+
+        return res.status(200).json({
+            user: {
+                id: user.id,
+                nome: user.nome,
+                email: user.email,
+                perfil: user.perfil
+            },
+            token
+        });
+
+    } catch (error) {
+        next(error);
+    }
+}
