@@ -14,6 +14,7 @@ export const loginSchema = z.object({
 
 export const categorySchema = z.object({
     nome: z.string().min(3, "O nome da categoria deve ter pelo menos 3 caracteres"),
+    ativo: z.boolean(),
 });
 
 export const reimbursementSchema = z.object({

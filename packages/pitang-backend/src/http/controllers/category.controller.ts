@@ -7,7 +7,11 @@ export async function getCategories(req: Request, res: Response, next: NextFunct
     try {
         const categories = await prisma.category.findMany();
 
-        return res.status(200).json(categories);
+        return res.status(200).json({
+            message: "Categorias listadas com sucesso",
+            statusCode: 200,
+            data: categories
+        });
     } catch (error) {
         next(error);
     }
@@ -79,7 +83,7 @@ export async function putCategory(req: Request, res: Response, next: NextFunctio
             });
         }
 
-        const { nome } = result.data;
+        const { nome, ativo } = result.data;
 
         const categoryExists = await prisma.category.findUnique({
             where: { id }
@@ -109,7 +113,8 @@ export async function putCategory(req: Request, res: Response, next: NextFunctio
         await prisma.category.update({
             where: { id },
             data: {
-                nome
+                nome,
+                ativo
             }
         });
 
