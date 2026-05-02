@@ -1,0 +1,94 @@
+const base_url = import.meta.env.VITE_API_BASE_URL || 'http://localhost:3333';
+
+import FetcherError from './FetcherError';
+
+function getToken() {
+    return document.cookie
+        .split('; ')
+        .find((c) => c.startsWith('@pitang/accessToken='))
+        ?.split('=')[1];
+}
+
+function changeResource(resource: RequestInfo) {
+    if (resource.toString().startsWith('http')) {
+        return resource;
+    }
+    return `${base_url}${resource}`;
+}
+
+const fetcher = async <T = any>(
+    resource: RequestInfo,
+    options?: RequestInit,
+): Promise<T> => {
+    const token = getToken();
+
+    const response = await fetch(changeResource(resource), {
+        ...options,
+        headers: {
+            'Content-Type': 'application/json',
+            ...(token ? { Authorization: `Bearer ${token}` } : {}),
+            ...options?.headers,
+        },
+    });
+
+    if (!response.ok) {
+        const error = new FetcherError(
+            'An error occurred while fetching the data.',
+        );
+
+        error.info = await response.json();
+        error.status = response.status;
+        throw error;
+    }
+    if (
+        options?.method === 'DELETE' ||
+        response.status === 204 ||
+        response.headers.get('Content-Length') === '0'
+    ) {
+        return {} as T;
+    }
+
+    return response.json();
+};
+
+fetcher.delete = (resource: RequestInfo) =>
+    fetcher(resource, { method: 'DELETE' });
+
+fetcher.patch = <T = any>(resource: RequestInfo, data: unknown, options?: RequestInit) =>
+    fetcher<T>(resource, {
+        ...options,
+        body: JSON.stringify(data),
+        method: 'PATCH',
+    });
+
+fetcher.post = <T = any>(
+    resource: RequestInfo,
+    data?: unknown,
+    options?: RequestInit & { shouldStringify?: boolean }
+) =>
+    fetcher<T>(resource, {
+        ...options,
+        body: (options?.shouldStringify ?? true)
+            ? data ? JSON.stringify(data) : null
+            : (data as BodyInit),
+        method: 'POST',
+    }) as Promise<T>;
+
+fetcher.put = (resource: RequestInfo, data: unknown, options?: RequestInit) =>
+    fetcher(resource, {
+        ...options,
+        body: JSON.stringify(data),
+        method: 'PUT',
+    });
+
+fetcher.get = <T = any>(resource: RequestInfo, options?: RequestInit) =>
+    fetcher<T>(resource, { ...options, method: 'GET' });
+
+fetcher.patch = <T = any>(resource: RequestInfo, data?: unknown, options?: RequestInit) =>
+    fetcher<T>(resource, {
+        ...options,
+        body: data ? JSON.stringify(data) : null,
+        method: 'PATCH',
+    });
+
+export default fetcher;
