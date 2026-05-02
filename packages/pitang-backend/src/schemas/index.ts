@@ -34,6 +34,14 @@ export const attachmentSchema = z.object({
     tipoArquivo: z.string(),
 })
 
+export const paramId = z.object({
+    id: z.uuid("ID de reembolso inválido"),
+})
+
+export const numberId = z.object({
+    id: z.coerce.number().positive("ID inválido"),
+})
+
 export const paginationQuery = z.object({
     page: z.coerce.number().default(1),
     pageSize: z.coerce.number().max(100).default(20),

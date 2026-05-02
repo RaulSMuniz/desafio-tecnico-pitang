@@ -1,11 +1,21 @@
 import type { Request, Response, NextFunction } from "express";
 import { prisma } from "../../core/PrismaClient.js";
-import { attachmentSchema } from "../../schemas/index.js";
+import { attachmentSchema, paramId } from "../../schemas/index.js";
 import z from "zod";
 
 export async function postAttachmentSimulated(req: Request, res: Response, next: NextFunction) {
     try {
-        const id = req.params.id as string;
+        const paramIdResult = paramId.safeParse(req.params);
+
+        if (!paramIdResult.success) {
+            return res.status(400).json({
+                message: "Dados de entrada inválidos",
+                errors: z.treeifyError(paramIdResult.error),
+                statusCode: 400
+            });
+        }
+
+        const id = paramIdResult.data.id;
         const result = attachmentSchema.safeParse(req.body);
 
         if (!result.success) {
@@ -43,9 +53,9 @@ export async function postAttachmentSimulated(req: Request, res: Response, next:
             }
         });
 
-        return res.status(201).json({
+        return res.status(200).json({
             message: "Anexo simulado com sucesso",
-            statusCode: 201,
+            statusCode: 200,
             data: attachment
         });
     } catch (error) {

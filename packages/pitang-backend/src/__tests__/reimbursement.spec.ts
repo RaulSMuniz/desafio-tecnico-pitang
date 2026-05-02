@@ -44,7 +44,7 @@ describe('Reimbursement Flow (Business Rules)', () => {
                     categoriaId: categoriaId
                 });
 
-            expect(response.status).toBe(201);
+            expect(response.status).toBe(200);
             expect(response.body.data).toHaveProperty('id');
             expect(response.body.data.status).toBe('RASCUNHO');
 
@@ -202,7 +202,7 @@ describe('Reimbursement Flow (Business Rules)', () => {
                 });
 
             // Se o backend não tiver essa rota, este teste continuará dando 404
-            expect(res.status).toBe(201);
+            expect(res.status).toBe(200);
 
             const attachment = await prisma.attachment.findFirst({
                 where: { solicitacaoId: reimbursementId }

@@ -1,7 +1,7 @@
 import type { Request, Response, NextFunction } from "express";
 import bcrypt from "bcryptjs";
 import { prisma } from "../../core/PrismaClient.js";
-import { userSchema } from "../../schemas/index.js";
+import { paramId, userSchema } from "../../schemas/index.js";
 import z from "zod";
 
 /**
@@ -25,6 +25,41 @@ export async function getUsers(req: Request, res: Response, next: NextFunction) 
         return res.status(200).json(userList);
     } catch (error) {
         next(error)
+    }
+}
+
+export async function getUserById(req: Request, res: Response, next: NextFunction) {
+    try {
+        const result = paramId.safeParse(req.params);
+
+        if (!result.success) {
+            return res.status(400).json({
+                message: "Dados de entrada inválidos",
+                errors: z.treeifyError(result.error),
+                statusCode: 400
+            });
+        }
+
+        const { id } = result.data;
+
+        const user = await prisma.user.findUnique({
+            where: { id }
+        });
+
+        if (!user) {
+            return res.status(404).json({
+                message: "Usuário não encontrado",
+                statusCode: 404
+            });
+        }
+
+        return res.status(200).json({
+            message: "Usuário encontrado",
+            statusCode: 200,
+            data: user,
+        });
+    } catch (error) {
+        next(error);
     }
 }
 
@@ -80,7 +115,17 @@ export async function postUser(req: Request, res: Response, next: NextFunction) 
 
 export async function deleteUser(req: Request, res: Response, next: NextFunction) {
     try {
-        const id = req.params.id as string;
+        const result = paramId.safeParse(req.params);
+
+        if (!result.success) {
+            return res.status(400).json({
+                message: "Dados de entrada inválidos",
+                errors: z.treeifyError(result.error),
+                statusCode: 400
+            });
+        }
+
+        const { id } = result.data;
 
         await prisma.user.delete({
             where: { id }

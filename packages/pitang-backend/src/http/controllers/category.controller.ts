@@ -1,6 +1,6 @@
 import type { Request, Response, NextFunction } from "express";
 import { prisma } from "../../core/PrismaClient.js";
-import { categorySchema } from "../../schemas/index.js";
+import { categorySchema, numberId } from "../../schemas/index.js";
 import z from "zod";
 
 export async function getCategories(req: Request, res: Response, next: NextFunction) {
@@ -57,7 +57,17 @@ export async function postCategory(req: Request, res: Response, next: NextFuncti
 
 export async function putCategory(req: Request, res: Response, next: NextFunction) {
     try {
-        const id = Number(req.params.id) as number;
+        const paramId = numberId.safeParse(req.params);
+
+        if (!paramId.success) {
+            return res.status(400).json({
+                message: "Dados de entrada inválidos",
+                errors: z.treeifyError(paramId.error),
+                statusCode: 400
+            });
+        }
+
+        const { id } = paramId.data;
 
         const result = categorySchema.safeParse(req.body);
 

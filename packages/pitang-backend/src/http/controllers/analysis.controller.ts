@@ -1,12 +1,22 @@
 import type { Request, Response, NextFunction } from "express";
 import { prisma } from "../../core/PrismaClient.js";
-import { rejectionSchema } from "../../schemas/index.js";
+import { paramId, rejectionSchema } from "../../schemas/index.js";
 import z from "zod";
 
 export async function approveReimbursement(req: Request, res: Response, next: NextFunction) {
     try {
-        const id = req.params.id as string;
+        const paramIdResult = paramId.safeParse(req.params);
         const userId = req.user.id;
+
+        if (!paramIdResult.success) {
+            return res.status(400).json({
+                message: "Dados de entrada inválidos",
+                errors: z.treeifyError(paramIdResult.error),
+                statusCode: 400
+            });
+        }
+
+        const id = paramIdResult.data.id;
 
         const reimbursement = await prisma.reimbursement.findUnique({ where: { id } });
 

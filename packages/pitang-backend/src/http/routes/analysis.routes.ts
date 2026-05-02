@@ -13,8 +13,8 @@ const analysisRouter = express.Router();
 
 analysisRouter.use(ensureAuthenticated);
 
-analysisRouter.post("/reimbursements/:id/approve", roleRestrictedMiddleware([Role.GESTOR, Role.FINANCEIRO, Role.ADMIN]), approveReimbursement);
-analysisRouter.post("/reimbursements/:id/reject", roleRestrictedMiddleware([Role.GESTOR, Role.FINANCEIRO, Role.ADMIN]), rejectReimbursement);
+analysisRouter.post("/reimbursements/:id/approve", roleRestrictedMiddleware([Role.GESTOR, Role.ADMIN]), approveReimbursement);
+analysisRouter.post("/reimbursements/:id/reject", roleRestrictedMiddleware([Role.GESTOR, Role.ADMIN]), rejectReimbursement);
 analysisRouter.post("/reimbursements/:id/pay", roleRestrictedMiddleware([Role.FINANCEIRO, Role.ADMIN]), payReimbursement);
 
 
