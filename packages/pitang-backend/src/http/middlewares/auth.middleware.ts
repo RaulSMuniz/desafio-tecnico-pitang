@@ -66,6 +66,6 @@ export async function ensureAuthenticated(req: Request, res: Response, next: Nex
 
         return next();
     } catch {
-        return res.status(401).json({ message: "Invalid token" });
+        return res.status(401).json({ message: "Invalid or expired token" });
     }
 }

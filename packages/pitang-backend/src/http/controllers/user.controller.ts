@@ -22,7 +22,18 @@ export async function getUsers(req: Request, res: Response, next: NextFunction) 
             }
         });
 
-        return res.status(200).json(userList);
+        if (!userList) {
+            return res.status(204).json({
+                message: "Nenhum usuário encontrado",
+                statusCode: 204,
+            });
+        }
+
+        return res.status(200).json({
+            message: "Usuários encontrados",
+            statusCode: 200,
+            data: userList,
+        });
     } catch (error) {
         next(error)
     }

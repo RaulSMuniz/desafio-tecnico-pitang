@@ -35,12 +35,19 @@ export async function getReimbursements(req: Request, res: Response, next: NextF
             }
         });
 
+        if (!reimbursementList) {
+            return res.status(204).json({
+                message: "Nenhum reembolso encontrado",
+                statusCode: 204,
+            });
+        }
+
         const formatted = reimbursementList.map(item => ({
             ...item,
             valor: Number(item.valor)
         }));
 
-        return res.status(201).json({
+        return res.status(200).json({
             message: "Reembolsos listados com sucesso",
             statusCode: 200,
             data: formatted
@@ -100,9 +107,16 @@ export async function postReimbursement(req: Request, res: Response, next: NextF
             }
         });
 
-        return res.status(200).json({
+        if (!reimbursement) {
+            return res.status(500).json({
+                message: "Erro ao criar reembolso",
+                statusCode: 500
+            });
+        }
+
+        return res.status(201).json({
             message: "Reembolso criado com sucesso",
-            statusCode: 200,
+            statusCode: 201,
             data: reimbursement
         });
     } catch (error) {
