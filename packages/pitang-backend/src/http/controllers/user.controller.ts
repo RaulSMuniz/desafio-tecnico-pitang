@@ -150,3 +150,68 @@ export async function deleteUser(req: Request, res: Response, next: NextFunction
         next(error);
     }
 }
+
+export async function putUser(req: Request, res: Response, next: NextFunction) {
+    try {
+        const paramResult = paramId.safeParse(req.params);
+        if (!paramResult.success) {
+            return res.status(400).json({
+                message: "ID inválido",
+                errors: z.treeifyError(paramResult.error),
+                statusCode: 400
+            });
+        }
+        const { id } = paramResult.data;
+
+        const result = userSchema.safeParse(req.body);
+        if (!result.success) {
+            return res.status(400).json({
+                message: "Dados de entrada inválidos",
+                errors: z.treeifyError(result.error),
+                statusCode: 400
+            });
+        }
+        const { nome, email, senha, perfil } = result.data;
+
+        const currentUser = await prisma.user.findUnique({ where: { id } });
+        if (!currentUser) {
+            return res.status(404).json({
+                message: "Usuário não encontrado",
+                statusCode: 404
+            });
+        }
+
+        if (email !== currentUser.email) {
+            const emailExists = await prisma.user.findUnique({ where: { email } });
+            if (emailExists) {
+                return res.status(409).json({
+                    message: "Este e-mail já está em uso.",
+                    statusCode: 409
+                });
+            }
+        }
+
+        let hashedPassword = currentUser.senha;
+        if (senha) {
+            const salt = await bcrypt.genSalt(10);
+            hashedPassword = await bcrypt.hash(senha, salt);
+        }
+
+        await prisma.user.update({
+            where: { id },
+            data: {
+                nome,
+                email,
+                senha: hashedPassword,
+                perfil: perfil as any,
+            },
+        });
+
+        return res.status(200).json({
+            message: "Usuário atualizado com sucesso",
+            statusCode: 200,
+        });
+    } catch (error) {
+        next(error);
+    }
+}
