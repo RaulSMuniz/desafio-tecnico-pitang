@@ -1,7 +1,7 @@
 import type { Request, Response, NextFunction } from "express";
 import bcrypt from "bcryptjs";
 import { prisma } from "../../core/PrismaClient.js";
-import { paramId, userSchema } from "../../schemas/index.js";
+import { paramId, updateUserSchema, userSchema } from "../../schemas/index.js";
 import z from "zod";
 
 /**
@@ -163,7 +163,7 @@ export async function putUser(req: Request, res: Response, next: NextFunction) {
         }
         const { id } = paramResult.data;
 
-        const result = userSchema.safeParse(req.body);
+        const result = updateUserSchema.safeParse(req.body);
         if (!result.success) {
             return res.status(400).json({
                 message: "Dados de entrada inválidos",
@@ -181,7 +181,7 @@ export async function putUser(req: Request, res: Response, next: NextFunction) {
             });
         }
 
-        if (email !== currentUser.email) {
+        if (email && email !== currentUser.email) {
             const emailExists = await prisma.user.findUnique({ where: { email } });
             if (emailExists) {
                 return res.status(409).json({
@@ -200,11 +200,11 @@ export async function putUser(req: Request, res: Response, next: NextFunction) {
         await prisma.user.update({
             where: { id },
             data: {
-                nome,
-                email,
+                nome: nome || undefined,
+                email: email || undefined,
                 senha: hashedPassword,
-                perfil: perfil as any,
-            },
+                perfil: perfil || undefined,
+            } as any,
         });
 
         return res.status(200).json({

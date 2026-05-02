@@ -7,6 +7,13 @@ export const userSchema = z.object({
     perfil: z.enum(["COLABORADOR", "GESTOR", "FINANCEIRO", "ADMIN"]).optional(),
 });
 
+export const updateUserSchema = z.object({
+    nome: z.string().optional(),
+    email: z.email().optional(),
+    senha: z.string().min(8, "A senha deve ter pelo menos 8 caracteres").optional(),
+    perfil: z.enum(["COLABORADOR", "GESTOR", "FINANCEIRO", "ADMIN"]).optional(),
+})
+
 export const loginSchema = z.object({
     email: z.email("O email deve ser válido"),
     senha: z.string().min(1, "A senha deve ter pelo menos 6 caracteres"),
