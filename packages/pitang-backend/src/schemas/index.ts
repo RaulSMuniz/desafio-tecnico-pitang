@@ -42,6 +42,14 @@ export const numberId = z.object({
     id: z.coerce.number().positive("ID inválido"),
 })
 
+export const historySchema = z.object({
+    solicitacaoId: z.uuid("ID de reembolso inválido"),
+    observacao: z.string(),
+    criadoEm: z.coerce.date(),
+    acao: z.enum(["ENVIADO", "APROVADO", "REJEITADO"]),
+    usuarioId: z.uuid("ID de usuário inválido"),
+})
+
 export const paginationQuery = z.object({
     page: z.coerce.number().default(1),
     pageSize: z.coerce.number().max(100).default(20),
