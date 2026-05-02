@@ -110,7 +110,7 @@ export async function putCategory(req: Request, res: Response, next: NextFunctio
             });
         }
 
-        await prisma.category.update({
+        const updatedCategory = await prisma.category.update({
             where: { id },
             data: {
                 nome,
@@ -120,7 +120,8 @@ export async function putCategory(req: Request, res: Response, next: NextFunctio
 
         return res.status(200).json({
             message: "Categoria atualizada com sucesso",
-            statusCode: 200
+            statusCode: 200,
+            data: updatedCategory
         });
     } catch (error) {
         next(error);
