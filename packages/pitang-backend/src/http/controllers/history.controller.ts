@@ -2,6 +2,7 @@ import type { Request, Response, NextFunction } from "express";
 import { prisma } from "../../core/PrismaClient.js";
 import { paramId } from "../../schemas/index.js";
 import z from "zod";
+import dayjs from "dayjs";
 
 export async function getHistoryById(req: Request, res: Response, next: NextFunction) {
     try {
@@ -57,10 +58,15 @@ export async function getHistoryById(req: Request, res: Response, next: NextFunc
             });
         }
 
+        const historyFormatted = history.map(item => ({
+            ...item,
+            criadoEm: dayjs(item.criadoEm).format('DD/MM/YYYY HH:mm:ss')
+        }));
+
         return res.status(200).json({
             message: "Histórico encontrado",
             statusCode: 200,
-            data: history,
+            data: historyFormatted,
         });
     } catch (error) {
         next(error);
@@ -99,10 +105,15 @@ export async function getHistory(req: Request, res: Response, next: NextFunction
             });
         }
 
+        const historyFormatted = history.map(item => ({
+            ...item,
+            criadoEm: dayjs(item.criadoEm).format('DD/MM/YYYY HH:mm:ss')
+        }));
+
         return res.status(200).json({
             message: "Histórico encontrado",
             statusCode: 200,
-            data: history,
+            data: historyFormatted,
         });
     } catch (error) {
         next(error);
