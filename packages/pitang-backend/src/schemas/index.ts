@@ -8,8 +8,8 @@ export const userSchema = z.object({
 });
 
 export const updateUserSchema = z.object({
-    nome: z.string().optional(),
-    email: z.email().optional(),
+    nome: z.string("Nome inválido."),
+    email: z.email("Email inválido"),
     senha: z.string().min(8, "A senha deve ter pelo menos 8 caracteres").optional(),
     perfil: z.enum(["COLABORADOR", "GESTOR", "FINANCEIRO", "ADMIN"]).optional(),
 })

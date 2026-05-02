@@ -127,23 +127,22 @@ export async function postUser(req: Request, res: Response, next: NextFunction) 
 export async function deleteUser(req: Request, res: Response, next: NextFunction) {
     try {
         const result = paramId.safeParse(req.params);
-
         if (!result.success) {
             return res.status(400).json({
                 message: "Dados de entrada inválidos",
-                errors: z.treeifyError(result.error),
                 statusCode: 400
             });
         }
 
         const { id } = result.data;
 
-        await prisma.user.delete({
-            where: { id }
+        await prisma.user.update({
+            where: { id },
+            data: { deletadoEm: new Date() }
         });
 
         return res.status(200).json({
-            message: "Usuário deletado com sucesso",
+            message: "Usuário desativado com sucesso",
             statusCode: 200
         });
     } catch (error) {

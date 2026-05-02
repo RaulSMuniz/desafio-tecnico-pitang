@@ -33,13 +33,15 @@ enum Action {
 }
 
 model User {
-  id           String   @id @default(uuid())
+  id           String    @id @default(uuid())
   nome         String
-  email        String   @unique
+  email        String    @unique
   senha        String
-  perfil       Role     @default(COLABORADOR)
-  criadoEm     DateTime @default(now())
-  atualizadoEm DateTime @updatedAt
+  perfil       Role      @default(COLABORADOR)
+  criadoEm     DateTime  @default(now())
+  atualizadoEm DateTime  @updatedAt
+  ativo        Boolean   @default(true)
+  deletadoEm   DateTime?
 
   solicitacoes Reimbursement[]
   historicos   History[]
