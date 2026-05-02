@@ -4,7 +4,8 @@ import {
     getUsers,
     postUser,
     deleteUser,
-    putUser
+    putUser,
+    restoreUser
 } from '../controllers/user.controller.js';
 import { login } from '../controllers/auth.controller.js';
 import { roleRestrictedMiddleware } from "../middlewares/role.restricted.middleware.js";
@@ -20,5 +21,6 @@ userRouter.get('/users', roleRestrictedMiddleware([Role.ADMIN]), getUsers);
 userRouter.post('/users', roleRestrictedMiddleware([Role.ADMIN]), postUser);
 userRouter.delete('/users/:id', roleRestrictedMiddleware([Role.ADMIN]), deleteUser);
 userRouter.put('/users/:id', roleRestrictedMiddleware([Role.ADMIN]), putUser);
+userRouter.patch('/users/:id/restore', roleRestrictedMiddleware([Role.ADMIN]), restoreUser);
 
 export default userRouter;

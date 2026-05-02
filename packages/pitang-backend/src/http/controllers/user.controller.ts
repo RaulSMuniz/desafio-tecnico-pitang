@@ -214,3 +214,33 @@ export async function putUser(req: Request, res: Response, next: NextFunction) {
         next(error);
     }
 }
+
+export async function restoreUser(req: Request, res: Response, next: NextFunction) {
+    try {
+        const paramResult = paramId.safeParse(req.params);
+
+        if (!paramResult.success) {
+            return res.status(400).json({
+                message: "ID inválido",
+                errors: z.treeifyError(paramResult.error),
+                statusCode: 400
+            });
+        }
+        const { id } = paramResult.data;
+
+        await prisma.user.update({
+            where: { id },
+            data: {
+                deletadoEm: null,
+                ativo: true
+            }
+        });
+
+        return res.status(200).json({
+            message: "Usuário reativado com sucesso",
+            statusCode: 200
+        });
+    } catch (error) {
+        next(error);
+    }
+}
