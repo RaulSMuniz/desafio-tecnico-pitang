@@ -1,6 +1,8 @@
-# Ignorar dependências e arquivos de ambiente
-node_modules/
-.env
+# Ignora tudo na raiz
+/*
 
+# Abre exceção apenas para o que queremos manter
+!packages/
+!.gitignore
+!README.md
 desafio-estags-pitang.html
-.vscode
