@@ -23,8 +23,8 @@ export async function login(req: Request, res: Response, next: NextFunction) {
 
         const { email, senha } = result.data;
 
-        const user = await prisma.user.findUnique({
-            where: { email }
+        const user = await prisma.user.findFirst({
+            where: { email, deletadoEm: null }
         });
 
         if (!user) {

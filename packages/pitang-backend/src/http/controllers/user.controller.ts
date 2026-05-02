@@ -16,6 +16,7 @@ export async function getUsers(req: Request, res: Response, next: NextFunction) 
                 email: true,
                 perfil: true,
                 criadoEm: true,
+                deletadoEm: true,
             },
             orderBy: {
                 criadoEm: 'desc'
