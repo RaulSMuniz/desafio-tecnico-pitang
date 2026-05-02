@@ -1,6 +1,7 @@
 import express from 'express';
 
 import {
+    getAttachmentById,
     postAttachmentSimulated
 } from '../controllers/attachment.controller.js';
 import { ensureAuthenticated } from '../middlewares/auth.middleware.js';
@@ -13,8 +14,13 @@ attachmentRouter.use(ensureAuthenticated);
 
 attachmentRouter.post(
     "/reimbursements/:id/attachments",
-    roleRestrictedMiddleware([Role.COLABORADOR, Role.GESTOR, Role.FINANCEIRO, Role.ADMIN]),
+    roleRestrictedMiddleware([Role.COLABORADOR, Role.ADMIN]),
     postAttachmentSimulated
+);
+attachmentRouter.get(
+    "/reimbursements/:id/attachments",
+    roleRestrictedMiddleware([Role.COLABORADOR, Role.GESTOR, Role.FINANCEIRO, Role.ADMIN]),
+    getAttachmentById
 );
 
 export default attachmentRouter;

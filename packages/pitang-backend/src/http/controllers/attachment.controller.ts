@@ -62,3 +62,36 @@ export async function postAttachmentSimulated(req: Request, res: Response, next:
         next(error);
     }
 }
+
+export async function getAttachmentById(req: Request, res: Response, next: NextFunction) {
+    try {
+        const paramIdResult = paramId.safeParse(req.params);
+
+        if (!paramIdResult.success) {
+            return res.status(400).json({
+                message: "Dados de entrada inválidos",
+                errors: z.treeifyError(paramIdResult.error),
+                statusCode: 400
+            });
+        }
+
+        const id = paramIdResult.data.id;
+        const attachment = await prisma.attachment.findUnique({ where: { id } });
+
+        if (!attachment) {
+            return res.status(404).json({ message: "Anexo não encontrado", statusCode: 404 });
+        }
+
+        if (attachment.solicitacaoId !== req.user.id) {
+            return res.status(403).json({ message: "Acesso negado", statusCode: 403 });
+        }
+
+        return res.status(200).json({
+            message: "Anexo encontrado com sucesso",
+            statusCode: 200,
+            data: attachment
+        });
+    } catch (error) {
+        next(error);
+    }
+}
