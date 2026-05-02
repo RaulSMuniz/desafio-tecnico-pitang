@@ -66,23 +66,24 @@ export async function postAttachmentSimulated(req: Request, res: Response, next:
 export async function getAttachmentById(req: Request, res: Response, next: NextFunction) {
     try {
         const paramIdResult = paramId.safeParse(req.params);
-
         if (!paramIdResult.success) {
-            return res.status(400).json({
-                message: "Dados de entrada inválidos",
-                errors: z.treeifyError(paramIdResult.error),
-                statusCode: 400
-            });
+            return res.status(400).json({ message: "Dados de entrada inválidos", statusCode: 400 });
         }
 
         const id = paramIdResult.data.id;
-        const attachment = await prisma.attachment.findUnique({ where: { id } });
+        const attachment = await prisma.attachment.findUnique({
+            where: { id },
+            include: { solicitacao: true }
+        });
 
         if (!attachment) {
             return res.status(404).json({ message: "Anexo não encontrado", statusCode: 404 });
         }
 
-        if (attachment.solicitacaoId !== req.user.id) {
+        const isOwner = attachment.solicitacao.solicitanteId === req.user.id;
+        const isPrivileged = ['GESTOR', 'FINANCEIRO', 'ADMIN'].includes(req.user.perfil as string);
+
+        if (!isOwner && !isPrivileged) {
             return res.status(403).json({ message: "Acesso negado", statusCode: 403 });
         }
 
