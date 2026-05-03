@@ -16,9 +16,10 @@ describe('ViewReimbursementModal', () => {
     id: '1',
     status: 'APROVADO',
     descricao: 'Viagem de Negócios',
-    valor: 1500.50,
     dataDespesa: '2024-03-20T10:00:00Z',
     categoria: { nome: 'Viagens' },
+    solicitante: { nome: 'João Silva' },
+    valor: 1500.50,
     attachments: [],
     history: [
       {
@@ -38,24 +39,25 @@ describe('ViewReimbursementModal', () => {
 
   it('renders reimbursement details correctly', () => {
     render(
-      <ViewReimbursementModal 
-        isOpen={true} 
-        onClose={jest.fn()} 
-        data={mockData} 
+      <ViewReimbursementModal
+        isOpen={true}
+        onClose={jest.fn()}
+        data={mockData}
       />
     );
 
     expect(screen.getByText('Viagem de Negócios')).toBeInTheDocument();
     expect(screen.getByText('R$ 1.500,50')).toBeInTheDocument();
     expect(screen.getByText('Viagens')).toBeInTheDocument();
+    expect(screen.getAllByText('João Silva').length).toBeGreaterThanOrEqual(1);
   });
 
   it('renders history audit trail correctly', () => {
     render(
-      <ViewReimbursementModal 
-        isOpen={true} 
-        onClose={jest.fn()} 
-        data={mockData} 
+      <ViewReimbursementModal
+        isOpen={true}
+        onClose={jest.fn()}
+        data={mockData}
       />
     );
 
@@ -64,7 +66,8 @@ describe('ViewReimbursementModal', () => {
 
     // Check individual history items
     expect(screen.getByText('Criado')).toBeInTheDocument();
-    expect(screen.getByText('João Silva')).toBeInTheDocument();
+    // Use getAllByText as the name appears in both details and history
+    expect(screen.getAllByText('João Silva').length).toBeGreaterThanOrEqual(1);
     expect(screen.getByText('"Solicitação inicial"')).toBeInTheDocument();
 
     expect(screen.getByText('Aprovado')).toBeInTheDocument();
@@ -82,10 +85,10 @@ describe('ViewReimbursementModal', () => {
     };
 
     render(
-      <ViewReimbursementModal 
-        isOpen={true} 
-        onClose={jest.fn()} 
-        data={dataWithAttachments} 
+      <ViewReimbursementModal
+        isOpen={true}
+        onClose={jest.fn()}
+        data={dataWithAttachments}
       />
     );
 
@@ -103,10 +106,10 @@ describe('ViewReimbursementModal', () => {
     };
 
     render(
-      <ViewReimbursementModal 
-        isOpen={true} 
-        onClose={jest.fn()} 
-        data={dataWithAttachments} 
+      <ViewReimbursementModal
+        isOpen={true}
+        onClose={jest.fn()}
+        data={dataWithAttachments}
       />
     );
 
@@ -116,7 +119,7 @@ describe('ViewReimbursementModal', () => {
     // Check preview screen elements
     expect(screen.getByText('Voltar')).toBeInTheDocument();
     expect(screen.getByText('Baixar Arquivo Original')).toBeInTheDocument();
-    
+
     // Check if the filename is in the preview header
     const previewHeader = screen.getAllByText('nota_fiscal.pdf');
     expect(previewHeader.length).toBeGreaterThan(0);
@@ -137,10 +140,10 @@ describe('ViewReimbursementModal', () => {
     };
 
     render(
-      <ViewReimbursementModal 
-        isOpen={true} 
-        onClose={jest.fn()} 
-        data={dataWithSimulated} 
+      <ViewReimbursementModal
+        isOpen={true}
+        onClose={jest.fn()}
+        data={dataWithSimulated}
       />
     );
 
@@ -154,10 +157,10 @@ describe('ViewReimbursementModal', () => {
   it('renders empty history message when no history is provided', () => {
     const noHistoryData = { ...mockData, history: [] };
     render(
-      <ViewReimbursementModal 
-        isOpen={true} 
-        onClose={jest.fn()} 
-        data={noHistoryData} 
+      <ViewReimbursementModal
+        isOpen={true}
+        onClose={jest.fn()}
+        data={noHistoryData}
       />
     );
 

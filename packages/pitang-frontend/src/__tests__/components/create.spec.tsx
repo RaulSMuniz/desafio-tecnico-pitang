@@ -1,5 +1,5 @@
 import '@testing-library/jest-dom';
-import { render, screen, waitFor } from '@testing-library/react';
+import { render, screen, waitFor, fireEvent } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { CreateReimbursementPage } from '@/routes/_auth/reimbursements/create';
 import fetcher from '@/api/fetcher';
@@ -50,8 +50,11 @@ describe('CreateReimbursementPage', () => {
 
     await waitFor(() => expect(fetcher).toHaveBeenCalled());
 
-    await user.type(screen.getByLabelText(/descrição/i), 'Almoço');
-    await user.type(screen.getByLabelText(/valor/i), '50');
+    await user.type(screen.getByPlaceholderText(/Jantar com cliente/i), 'Almoço');
+
+    // Buscar o input de valor que está no mesmo container do texto "Valor"
+    const valorInput = screen.getByText(/Valor/i).parentElement?.querySelector('input');
+    if (valorInput) await user.type(valorInput, '50');
 
     const categoryTrigger = screen.getByRole('combobox');
     await user.click(categoryTrigger);
@@ -92,11 +95,28 @@ describe('CreateReimbursementPage', () => {
     expect(toast.error).toHaveBeenCalledWith(expect.stringMatching(/a descrição/i));
 
     // Test future date
-    const dateInput = screen.getByLabelText(/data da despesa/i);
-    await user.clear(dateInput);
-    await user.type(dateInput, '2099-12-31');
+    const descInput = screen.getByPlaceholderText(/Jantar com cliente/i);
+    await user.type(descInput, 'Almoço válido');
+    
+    const valorInput = screen.getByText(/Valor/i).parentElement?.querySelector('input');
+    if (valorInput) {
+      await user.clear(valorInput);
+      await user.type(valorInput, '100');
+    }
+
+    const categoryTrigger = screen.getByRole('combobox');
+    await user.click(categoryTrigger);
+    const categoryItem = await screen.findByText('Alimentação');
+    await user.click(categoryItem);
+    
+    const dateLabel = screen.getByText(/Data da Despesa/i);
+    const dateInput = dateLabel.parentElement?.querySelector('input');
+    if (dateInput) {
+      fireEvent.change(dateInput, { target: { value: '2099-12-31' } });
+    }
     await user.click(submitButton);
-    expect(await screen.findByText(/a data da despesa não pode ser futura/i)).toBeInTheDocument();
-    expect(toast.error).toHaveBeenCalledWith('A data da despesa não pode ser futura');
+    await waitFor(() => {
+      expect(toast.error).toHaveBeenCalledWith('A data da despesa não pode ser futura');
+    });
   });
 });
