@@ -15,7 +15,7 @@ export interface AuthContextData {
     signed: boolean,
     loading: boolean,
     signIn: (credentials: object) => Promise<void>
-    signOut: () => void,
+    signOut: (reason?: string) => void,
 }
 
 export const AuthContext = createContext<AuthContextData>({} as AuthContextData);
@@ -45,6 +45,27 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         setLoading(false)
     }, [getCookieToken]);
 
+    useEffect(() => {
+        const checkExpiration = () => {
+            const token = getCookieToken();
+            if (!token) return;
+
+            try {
+                const payload = JSON.parse(atob(token.split('.')[1]));
+                const exp = payload.exp * 1000;
+
+                if (Date.now() >= exp) {
+                    signOut('expired');
+                }
+            } catch (e) {
+                // Token inválido ou corrompido, ignoramos para o signOut reativo tratar se necessário
+            }
+        };
+
+        const interval = setInterval(checkExpiration, 10000); // Checa a cada 10 segundos
+        return () => clearInterval(interval);
+    }, [getCookieToken]);
+
     const signIn = async (credentials: object) => {
         try {
             setLoading(true);
@@ -67,11 +88,11 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         }
     };
 
-    const signOut = () => {
+    const signOut = (reason?: string) => {
         document.cookie = "@pitang/accessToken=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT";
         localStorage.removeItem('@pitang/user');
         setUser(null);
-        window.location.href = '/login';
+        window.location.href = reason ? `/login?reason=${reason}` : '/login';
     };
 
     return (
