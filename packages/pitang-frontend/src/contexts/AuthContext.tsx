@@ -1,6 +1,7 @@
 import React, { createContext, useState, useEffect, useCallback } from 'react';
 import type { ReactNode } from 'react';
 import dayjs from 'dayjs';
+import useSWR from 'swr';
 import fetcher from '../api/fetcher';
 
 interface User {
@@ -44,6 +45,29 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
 
         setLoading(false)
     }, [getCookieToken]);
+
+    const { data: swrUser } = useSWR(
+        (user && !loading) ? '/auth/me' : null,
+        (url: string) => fetcher.get(url).then(res => res.user || res.data?.user || res),
+        {
+            refreshInterval: 5000,
+            revalidateOnFocus: true,
+            dedupingInterval: 2000,
+        }
+    );
+
+    useEffect(() => {
+        if (swrUser && user) {
+            const hasChanged = swrUser.perfil !== user.perfil || swrUser.nome !== user.nome;
+
+            if (hasChanged) {
+                console.log("Detectada mudança de perfil/cargo. Atualizando interface...");
+                setUser(swrUser);
+                localStorage.setItem('@pitang/user', JSON.stringify(swrUser));
+                window.location.reload();
+            }
+        }
+    }, [swrUser, user]);
 
     useEffect(() => {
         const checkExpiration = () => {

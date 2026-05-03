@@ -44,13 +44,15 @@ export async function authMiddleware(
 
         const user = await prisma.user.findUnique({
             where: { id: decoded.sub || decoded.id },
-            select: { ativo: true, deletadoEm: true }
+            select: { ativo: true, deletadoEm: true, perfil: true }
         });
 
         if (!user || !user.ativo || user.deletadoEm !== null) {
             return response.status(401).json({ message: "User is inactive or not found" });
         }
 
+        // Sobrescrevemos o perfil do token pelo perfil atual do banco
+        decoded.perfil = user.perfil;
         (request.user as any) = decoded;
         next();
     } catch (error) {
@@ -72,7 +74,7 @@ export async function ensureAuthenticated(req: Request, res: Response, next: Nex
 
         const user = await prisma.user.findUnique({
             where: { id: decoded.sub },
-            select: { ativo: true, deletadoEm: true }
+            select: { ativo: true, deletadoEm: true, perfil: true }
         });
 
         if (!user || !user.ativo || user.deletadoEm !== null) {
@@ -81,7 +83,7 @@ export async function ensureAuthenticated(req: Request, res: Response, next: Nex
 
         req.user = {
             id: decoded.sub,
-            perfil: decoded.perfil
+            perfil: user.perfil // Usamos o perfil do BANCO, não o do Token
         };
 
         return next();

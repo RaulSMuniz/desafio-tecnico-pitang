@@ -74,3 +74,43 @@ export async function login(req: Request, res: Response, next: NextFunction) {
         next(error);
     }
 }
+
+/**
+ * GET /auth/me
+ */
+export async function getMe(req: Request, res: Response, next: NextFunction) {
+    try {
+        const userId = req.user?.id;
+
+        if (!userId) {
+            return res.status(401).json({ message: "Não autorizado" });
+        }
+
+        const user = await prisma.user.findUnique({
+            where: { id: userId },
+            select: {
+                id: true,
+                nome: true,
+                email: true,
+                perfil: true,
+                ativo: true,
+                deletadoEm: true
+            }
+        });
+
+        if (!user || !user.ativo || user.deletadoEm !== null) {
+            return res.status(401).json({ message: "Usuário inativo ou não encontrado" });
+        }
+
+        return res.status(200).json({
+            user: {
+                id: user.id,
+                nome: user.nome,
+                email: user.email,
+                perfil: user.perfil
+            }
+        });
+    } catch (error) {
+        next(error);
+    }
+}

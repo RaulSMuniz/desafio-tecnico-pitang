@@ -7,7 +7,7 @@ import {
     putUser,
     restoreUser
 } from '../controllers/user.controller.js';
-import { login } from '../controllers/auth.controller.js';
+import { login, getMe } from '../controllers/auth.controller.js';
 import { roleRestrictedMiddleware } from "../middlewares/role.restricted.middleware.js";
 import { ensureAuthenticated } from '../middlewares/auth.middleware.js';
 import { Role } from '@prisma/client';
@@ -16,6 +16,8 @@ const userRouter = express.Router();
 userRouter.post('/auth/login', login);
 
 userRouter.use(ensureAuthenticated);
+
+userRouter.get('/auth/me', getMe);
 
 userRouter.get('/users', roleRestrictedMiddleware([Role.ADMIN]), getUsers);
 userRouter.post('/users', roleRestrictedMiddleware([Role.ADMIN]), postUser);
