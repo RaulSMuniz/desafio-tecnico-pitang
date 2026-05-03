@@ -23,7 +23,7 @@ export const Route = createFileRoute('/_auth/reimbursements/create')({
   component: CreateReimbursementPage,
 })
 
-function CreateReimbursementPage() {
+export function CreateReimbursementPage() {
   const navigate = useNavigate()
   const [categories, setCategories] = useState<any[]>([])
   const [loadingCats, setLoadingCats] = useState(true)

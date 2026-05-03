@@ -33,7 +33,7 @@ export function RejectionModal({ isOpen, onClose, onConfirm }: RejectionModalPro
                     <Button variant="outline" onClick={onClose}>Cancelar</Button>
                     <Button
                         variant="destructive"
-                        disabled={!text.trim()}
+                        disabled={text.trim().length < 5}
                         onClick={() => {
                             onConfirm(text)
                             setText('')
