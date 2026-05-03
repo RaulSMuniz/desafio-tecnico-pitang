@@ -89,7 +89,7 @@ function AuthLayout() {
             </div>
 
             <button
-              onClick={signOut}
+              onClick={() => signOut()}
               className="p-2 hover:bg-red-50 text-red-600 rounded-xl transition-all group"
               title="Sair do sistema"
             >
