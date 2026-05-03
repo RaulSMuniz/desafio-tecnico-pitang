@@ -9,6 +9,7 @@ import { UserTable } from '@/components/user-table'
 import { UserFormModal } from '@/components/user-form-modal'
 import { DeleteUserModal } from '@/components/delete-user-modal'
 import { redirect } from '@tanstack/react-router'
+import { PageTitle } from '@/components/page-title'
 
 export const Route = createFileRoute('/_auth/users')({
   beforeLoad: ({ context }) => {
@@ -110,10 +111,12 @@ function UsersManagement() {
     }
   }
 
-  if (loading) return <div className="p-8 font-bold text-slate-900 text-left">Carregando usuários...</div>
+  if (loading) return <div className="p-8 font-bold text-slate-900 text-left">
+    <PageTitle title="Gestão de Usuários" />Carregando usuários...</div>
 
   return (
     <div className="flex flex-col h-full w-full overflow-hidden text-left">
+      <PageTitle title="Gestão de Usuários" />
       <div className="flex items-center justify-between px-6 mb-6 shrink-0">
         <div>
           <h1 className="text-2xl font-bold tracking-tight text-slate-900">Gestão de Usuários</h1>

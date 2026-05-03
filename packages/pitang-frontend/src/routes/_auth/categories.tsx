@@ -13,6 +13,8 @@ import fetcher from '@/api/fetcher'
 import { toast } from 'sonner'
 import { Tag, Plus, Pencil, Power, PowerOff } from 'lucide-react'
 import { redirect } from '@tanstack/react-router'
+import { categorySchema } from '@/zodSchemas'
+import { PageTitle } from '@/components/page-title'
 
 export const Route = createFileRoute('/_auth/categories')({
   beforeLoad: ({ context }) => {
@@ -59,7 +61,14 @@ function CategoriesManagement() {
   }
 
   const handleSubmit = async () => {
-    if (!categoryName.trim()) return toast.error("O nome é obrigatório")
+    const result = categorySchema.safeParse({
+      nome: categoryName,
+      ativo: selectedCategory ? selectedCategory.ativo : true
+    })
+
+    if (!result.success) {
+      return toast.error(result.error.issues[0].message)
+    }
 
     try {
       if (selectedCategory) {
@@ -92,10 +101,13 @@ function CategoriesManagement() {
     }
   }
 
-  if (loading) return <div className="p-8 font-bold text-slate-900 text-left">Carregando categorias...</div>
+  if (loading) return <div className="p-8 font-bold text-slate-900 text-left">
+    <PageTitle title="Gestão de Categorias" />
+    Carregando categorias...</div>
 
   return (
     <div className="flex flex-col h-full w-full overflow-hidden text-left">
+      <PageTitle title="Gestão de Categorias" />
       <div className="flex items-center justify-between px-6 mb-6 shrink-0 text-left">
         <div className="text-left">
           <h1 className="text-2xl font-bold tracking-tight text-slate-900">Gestão de Categorias</h1>
