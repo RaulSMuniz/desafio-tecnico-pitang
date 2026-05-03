@@ -1,11 +1,13 @@
 import { createFileRoute, Outlet, useNavigate } from '@tanstack/react-router'
-import { useState, useEffect, useMemo } from 'react'
+import { useState, useMemo } from 'react'
+import useSWR, { mutate } from 'swr'
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { useAuth } from '@/hooks/use-auth'
 import fetcher from '@/api/fetcher'
 import { toast } from 'sonner'
 import { PageTitle } from '@/components/page-title'
+import { Skeleton } from "@/components/ui/skeleton"
 import {
     Plus,
     ClipboardList,
@@ -30,8 +32,12 @@ export const Route = createFileRoute('/_auth/reimbursements')({
 function ReimbursementsKanban() {
     const { user } = useAuth()
     const navigate = useNavigate()
-    const [reimbursements, setReimbursements] = useState<any[]>([])
-    const [loading, setLoading] = useState(true)
+
+    // Usando SWR para busca de dados com cache e revalidação automática
+    const { data, isLoading } = useSWR<any>('/reimbursements', (url: any) =>
+        fetcher.get(url).then(res => Array.isArray(res) ? res : res.data?.data || res.data || [])
+    )
+
     const [isRejectModalOpen, setIsRejectModalOpen] = useState(false)
     const [isViewModalOpen, setIsViewModalOpen] = useState(false)
     const [selectedData, setSelectedData] = useState<any>(null)
@@ -42,25 +48,7 @@ function ReimbursementsKanban() {
         date: ''
     })
 
-    const loadData = async () => {
-        try {
-            setLoading(true)
-            const response = await fetcher<any>('/reimbursements')
-            const dataArray = Array.isArray(response) ? response : response.data || []
-            setReimbursements(dataArray)
-        } catch (error) {
-            setReimbursements([])
-            toast.error("Erro ao carregar dados")
-        } finally {
-            setLoading(false)
-        }
-    }
-
-    useEffect(() => {
-        loadData()
-        window.addEventListener('refreshKanban', loadData)
-        return () => window.removeEventListener('refreshKanban', loadData)
-    }, [])
+    const reimbursements = data || []
 
     const handleEdit = (id: string) => navigate({ to: `/reimbursements/edit/${id}` })
 
@@ -91,7 +79,7 @@ function ReimbursementsKanban() {
         try {
             await fetcher.post(`/reimbursements/${id}/${action}`, data)
             toast.success("Operação realizada!")
-            loadData()
+            mutate('/reimbursements') // Revalida o cache globalmente
             setIsRejectModalOpen(false)
         } catch (error: any) {
             toast.error(error.info?.message || "Erro na operação")
@@ -131,10 +119,6 @@ function ReimbursementsKanban() {
         { title: "Finalizados", status: ['PAGO', 'REJEITADO', 'CANCELADO'], icon: History },
     ]
 
-    if (loading) return <div className="flex h-96 items-center justify-center font-bold text-slate-900 uppercase tracking-tighter animate-pulse">Carregando painel...
-        <PageTitle title="Solicitações de Reembolso" />
-    </div>
-
     return (
         <div className="flex flex-col h-full w-full overflow-hidden text-left">
             <PageTitle title="Solicitações de Reembolso" />
@@ -154,7 +138,7 @@ function ReimbursementsKanban() {
                 <ReimbursementFilters onFilterChange={setActiveFilters} />
             </div>
 
-            <div className="flex-1 px-6 pb-6 overflow-hidden">
+            <div className="flex-1 px-6 pb-6 overflow-hidden mt-4">
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 h-full text-left">
                     {columns.map((column) => {
                         const cards = filteredData.filter(r => column.status.includes(r.status))
@@ -168,34 +152,43 @@ function ReimbursementsKanban() {
                                 <div className="flex items-center gap-2 mb-4 shrink-0 text-left">
                                     <column.icon className="h-4 w-4 text-orange-600" />
                                     <h2 className="font-bold text-[11px] uppercase tracking-wider text-slate-700">{column.title}</h2>
-                                    <Badge variant="secondary" className="ml-auto font-bold">{cards.length}</Badge>
+                                    <Badge variant="secondary" className="ml-auto font-bold">
+                                        {isLoading ? <Skeleton className="h-4 w-4 rounded-full" /> : cards.length}
+                                    </Badge>
                                 </div>
 
                                 <div className="flex-1 overflow-y-auto space-y-4 pr-1 scrollbar-thin text-left">
-                                    {cards.map(item => {
-                                        return (
-                                            <div
-                                                key={item.id}
-                                                className="relative group cursor-pointer transition-all active:scale-[0.98] text-left"
-                                                onClick={(e) => handleView(item, e)}
-                                            >
-                                                <ReimbursementCard
-                                                    item={item}
-                                                    user={user}
-                                                    onAction={(id, action) => handleAction(id, action)}
-                                                    onEdit={(id) => handleEdit(id)}
-                                                    onOpenReject={(id) => {
-                                                        setSelectedId(id);
-                                                        setIsRejectModalOpen(true);
-                                                    }}
-                                                />
-                                            </div>
-                                        );
-                                    })}
-                                    {cards.length === 0 && (
-                                        <div className="py-12 text-center border border-dashed rounded-xl border-slate-300 text-[10px] uppercase text-slate-400 font-bold">
-                                            Sem itens
-                                        </div>
+                                    {isLoading ? (
+                                        <>
+                                            <Skeleton className="h-32 w-full rounded-2xl" />
+                                            <Skeleton className="h-32 w-full rounded-2xl" />
+                                        </>
+                                    ) : (
+                                        <>
+                                            {cards.map(item => (
+                                                <div
+                                                    key={item.id}
+                                                    className="relative group cursor-pointer transition-all active:scale-[0.98] text-left"
+                                                    onClick={(e) => handleView(item, e)}
+                                                >
+                                                    <ReimbursementCard
+                                                        item={item}
+                                                        user={user}
+                                                        onAction={(id, action) => handleAction(id, action)}
+                                                        onEdit={(id) => handleEdit(id)}
+                                                        onOpenReject={(id) => {
+                                                            setSelectedId(id);
+                                                            setIsRejectModalOpen(true);
+                                                        }}
+                                                    />
+                                                </div>
+                                            ))}
+                                            {cards.length === 0 && (
+                                                <div className="py-12 text-center border border-dashed rounded-xl border-slate-300 text-[10px] uppercase text-slate-400 font-bold">
+                                                    Sem itens
+                                                </div>
+                                            )}
+                                        </>
                                     )}
                                 </div>
                             </div>

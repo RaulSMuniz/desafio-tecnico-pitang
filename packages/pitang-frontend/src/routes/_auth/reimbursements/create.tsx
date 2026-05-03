@@ -1,5 +1,6 @@
 import { createFileRoute, useNavigate } from '@tanstack/react-router'
-import { useEffect, useState } from 'react'
+import { useState } from 'react'
+import useSWR, { mutate } from 'swr'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import * as z from 'zod'
@@ -25,8 +26,13 @@ export const Route = createFileRoute('/_auth/reimbursements/create')({
 
 export function CreateReimbursementPage() {
   const navigate = useNavigate()
-  const [categories, setCategories] = useState<any[]>([])
-  const [loadingCats, setLoadingCats] = useState(true)
+  const { data: categoriesData, isLoading: loadingCats } = useSWR('/categories', (url) =>
+    fetcher.get(url).then(res => {
+      const allCats = res.data?.data || res.data || []
+      return allCats.filter((cat: any) => cat.ativo)
+    })
+  )
+  const categories = categoriesData || []
   const [anexosSimulados, setAnexosSimulados] = useState<any[]>([])
 
   const {
@@ -43,15 +49,6 @@ export function CreateReimbursementPage() {
     }
   })
 
-  useEffect(() => {
-    fetcher<any>('/categories')
-      .then(response => {
-        const allCats = response.data?.data || response.data || []
-        const activeCats = allCats.filter((cat: any) => cat.ativo)
-        setCategories(activeCats)
-      })
-      .finally(() => setLoadingCats(false))
-  }, [])
 
   async function onSubmit(values: z.infer<typeof editReimbursementSchema>) {
     // Validar todos os anexos antes de começar
@@ -81,7 +78,7 @@ export function CreateReimbursementPage() {
         )
       }
 
-      window.dispatchEvent(new Event('refreshKanban'))
+      mutate('/reimbursements')
       toast.success("Solicitação criada com sucesso!")
       navigate({ to: '/reimbursements' })
     } catch (error: any) {
@@ -153,7 +150,7 @@ export function CreateReimbursementPage() {
                   <SelectValue placeholder={loadingCats ? "Carregando..." : "Selecione"} className="truncate" />
                 </SelectTrigger>
                 <SelectContent className="max-w-[calc(100vw-3rem)] md:max-w-xl">
-                  {categories.map(cat => (
+                  {categories.map((cat: any) => (
                     <SelectItem
                       key={cat.id}
                       value={cat.id.toString()}

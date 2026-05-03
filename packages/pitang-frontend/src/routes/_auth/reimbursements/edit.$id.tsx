@@ -1,5 +1,5 @@
 import { createFileRoute, useNavigate } from '@tanstack/react-router'
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useMemo } from 'react'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import * as z from 'zod'
@@ -7,6 +7,7 @@ import { toast } from 'sonner'
 import { ChevronLeft, Loader2, Save, X, Paperclip } from 'lucide-react'
 import dayjs from 'dayjs'
 import fetcher from '@/api/fetcher'
+import useSWR, { mutate } from 'swr'
 
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -26,8 +27,15 @@ export const Route = createFileRoute('/_auth/reimbursements/edit/$id')({
 export function EditReimbursementPage() {
   const { id } = Route.useParams()
   const navigate = useNavigate()
-  const [loading, setLoading] = useState(true)
-  const [categories, setCategories] = useState<any[]>([])
+
+  const { data: reimbursement, isLoading: loadingReimb } = useSWR(`/reimbursements/${id}`, (url) =>
+    fetcher.get(url).then(res => res.data?.data || res.data || res)
+  )
+
+  const { data: categoriesData, isLoading: loadingCats } = useSWR('/categories', (url) =>
+    fetcher.get(url).then(res => res.data?.data || res.data || [])
+  )
+
   const [anexosSimulados, setAnexosSimulados] = useState<any[]>([])
 
   const {
@@ -44,41 +52,26 @@ export function EditReimbursementPage() {
   const categoriaIdValue = watch('categoriaId') || ''
 
   useEffect(() => {
-    const loadInitialData = async () => {
-      try {
-        setLoading(true)
-        const [reimbRes, catsRes] = await Promise.all([
-          fetcher.get<any>(`/reimbursements/${id}`),
-          fetcher.get<any>('/categories')
-        ])
+    if (reimbursement) {
+      const attachments = (reimbursement.attachments || reimbursement.anexos || []).map((a: any) => ({
+        ...a,
+        isExisting: true
+      }))
+      setAnexosSimulados(attachments)
 
-        const reimbursement = reimbRes.data?.data || reimbRes.data || reimbRes
-        const allCats = catsRes.data?.data || catsRes.data || []
-
-        const activeCats = allCats.filter((cat: any) => cat.ativo || cat.id === reimbursement.categoriaId)
-        setCategories(activeCats)
-
-        const attachments = (reimbursement.attachments || reimbursement.anexos || []).map((a: any) => ({
-          ...a,
-          isExisting: true // Marcar como existente para não reenviar no submit
-        }))
-        setAnexosSimulados(attachments)
-
-        reset({
-          descricao: reimbursement.descricao || '',
-          valor: reimbursement.valor,
-          dataDespesa: dayjs(reimbursement.dataDespesa).format('YYYY-MM-DD'),
-          categoriaId: Number(reimbursement.categoriaId),
-        })
-      } catch (error) {
-        toast.error("Erro ao carregar dados")
-        navigate({ to: '/reimbursements' })
-      } finally {
-        setLoading(false)
-      }
+      reset({
+        descricao: reimbursement.descricao || '',
+        valor: reimbursement.valor,
+        dataDespesa: dayjs(reimbursement.dataDespesa).format('YYYY-MM-DD'),
+        categoriaId: Number(reimbursement.categoriaId),
+      })
     }
-    if (id) loadInitialData()
-  }, [id, reset, navigate])
+  }, [reimbursement, reset])
+
+  const categories = useMemo(() => {
+    if (!categoriesData || !reimbursement) return []
+    return categoriesData.filter((cat: any) => cat.ativo || cat.id === reimbursement.categoriaId)
+  }, [categoriesData, reimbursement])
 
   async function onSubmit(values: z.infer<typeof editReimbursementSchema>) {
     // Validar apenas os novos anexos antes de começar
@@ -109,13 +102,16 @@ export function EditReimbursementPage() {
         )
       }
 
-      window.dispatchEvent(new Event('refreshKanban'))
+      mutate('/reimbursements')
+      mutate(`/reimbursements/${id}`)
       toast.success("Solicitação atualizada!")
       navigate({ to: '/reimbursements' })
     } catch (error: any) {
       toast.error(error.info?.message || error.response?.data?.message || "Erro na operação")
     }
   }
+
+  const loading = loadingReimb || loadingCats
 
   const onError = (errors: any) => {
     const firstError = Object.values(errors)[0] as any;
@@ -186,7 +182,7 @@ export function EditReimbursementPage() {
                   <SelectValue placeholder="Selecione" className="truncate" />
                 </SelectTrigger>
                 <SelectContent className="max-w-[calc(100vw-3rem)] md:max-w-xl text-left">
-                  {categories.map(cat => (
+                  {categories.map((cat: any) => (
                     <SelectItem
                       key={cat.id}
                       value={cat.id.toString()}
