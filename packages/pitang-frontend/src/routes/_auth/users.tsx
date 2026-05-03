@@ -8,8 +8,14 @@ import { updateUserSchema, createUserSchema } from '@/zodSchemas'
 import { UserTable } from '@/components/user-table'
 import { UserFormModal } from '@/components/user-form-modal'
 import { DeleteUserModal } from '@/components/delete-user-modal'
+import { redirect } from '@tanstack/react-router'
 
 export const Route = createFileRoute('/_auth/users')({
+  beforeLoad: ({ context }) => {
+    if (context.auth.user?.perfil !== 'ADMIN') {
+      throw redirect({ to: '/dashboard' })
+    }
+  },
   component: UsersManagement,
 })
 

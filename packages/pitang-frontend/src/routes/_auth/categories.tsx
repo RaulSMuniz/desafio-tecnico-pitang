@@ -12,8 +12,14 @@ import {
 import fetcher from '@/api/fetcher'
 import { toast } from 'sonner'
 import { Tag, Plus, Pencil, Power, PowerOff } from 'lucide-react'
+import { redirect } from '@tanstack/react-router'
 
 export const Route = createFileRoute('/_auth/categories')({
+  beforeLoad: ({ context }) => {
+    if (context.auth.user?.perfil !== 'ADMIN') {
+      throw redirect({ to: '/dashboard' })
+    }
+  },
   component: CategoriesManagement,
 })
 
