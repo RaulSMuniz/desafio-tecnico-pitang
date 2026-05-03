@@ -1,4 +1,5 @@
 import request from 'supertest';
+import bcrypt from 'bcrypt';
 import { app } from '../app.js';
 import { prisma } from '../core/PrismaClient.js';
 
@@ -9,9 +10,24 @@ describe('Attachment Management (List and Security Rules)', () => {
     let reimbursementId: string;
 
     beforeAll(async () => {
+        const hashedSenha = await bcrypt.hash('12345678', 10);
+        
+        // Criar usuários específicos para esta suíte para evitar poluição
+        await prisma.user.upsert({
+            where: { email: 'attach_colab@gmail.com' },
+            update: { perfil: 'COLABORADOR', ativo: true, deletadoEm: null },
+            create: { email: 'attach_colab@gmail.com', nome: 'Attach Colab', senha: hashedSenha, perfil: 'COLABORADOR' }
+        });
+
+        await prisma.user.upsert({
+            where: { email: 'attach_outro@gmail.com' },
+            update: { perfil: 'COLABORADOR', ativo: true, deletadoEm: null },
+            create: { email: 'attach_outro@gmail.com', nome: 'Attach Outro', senha: hashedSenha, perfil: 'COLABORADOR' }
+        });
+
         const [resColab, resOutro, resGestor] = await Promise.all([
-            request(app).post('/auth/login').send({ email: 'colaborador@gmail.com', senha: '12345678' }),
-            request(app).post('/auth/login').send({ email: 'outro@gmail.com', senha: '12345678' }),
+            request(app).post('/auth/login').send({ email: 'attach_colab@gmail.com', senha: '12345678' }),
+            request(app).post('/auth/login').send({ email: 'attach_outro@gmail.com', senha: '12345678' }),
             request(app).post('/auth/login').send({ email: 'gestor@gmail.com', senha: '12345678' })
         ]);
 

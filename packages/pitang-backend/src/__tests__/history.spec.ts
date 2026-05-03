@@ -1,6 +1,7 @@
 import request from 'supertest';
 import { app } from '../app.js';
 import { prisma } from '../core/PrismaClient.js';
+import bcrypt from 'bcrypt';
 
 describe('Audit History (Traceability Rules)', () => {
     let tokenColaborador: string;
@@ -9,9 +10,24 @@ describe('Audit History (Traceability Rules)', () => {
     let reimbursementId: string;
 
     beforeAll(async () => {
+        const hashedSenha = await bcrypt.hash('12345678', 10);
+
+        // Criar usuários específicos para esta suíte para evitar poluição
+        await prisma.user.upsert({
+            where: { email: 'history_colab@gmail.com' },
+            update: { perfil: 'COLABORADOR', ativo: true, deletadoEm: null },
+            create: { email: 'history_colab@gmail.com', nome: 'History Colab', senha: hashedSenha, perfil: 'COLABORADOR' }
+        });
+
+        await prisma.user.upsert({
+            where: { email: 'history_outro@gmail.com' },
+            update: { perfil: 'COLABORADOR', ativo: true, deletadoEm: null },
+            create: { email: 'history_outro@gmail.com', nome: 'History Outro', senha: hashedSenha, perfil: 'COLABORADOR' }
+        });
+
         const [resColab, resOutro, resGestor] = await Promise.all([
-            request(app).post('/auth/login').send({ email: 'colaborador@gmail.com', senha: '12345678' }),
-            request(app).post('/auth/login').send({ email: 'outro@gmail.com', senha: '12345678' }),
+            request(app).post('/auth/login').send({ email: 'history_colab@gmail.com', senha: '12345678' }),
+            request(app).post('/auth/login').send({ email: 'history_outro@gmail.com', senha: '12345678' }),
             request(app).post('/auth/login').send({ email: 'gestor@gmail.com', senha: '12345678' })
         ]);
 

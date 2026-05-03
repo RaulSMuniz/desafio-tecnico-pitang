@@ -28,20 +28,23 @@ describe('Reimbursement Flow (Business Rules)', () => {
         categoriaInativaId = inativa.id;
 
         const hashedSenha = await bcrypt.hash('12345678', 10);
+        
+        // Criar usuários específicos para esta suíte para evitar poluição
         await prisma.user.upsert({
-            where: { email: 'outro@gmail.com' },
-            update: {},
-            create: {
-                email: 'outro@gmail.com',
-                nome: 'Outro Colaborador',
-                senha: hashedSenha,
-                perfil: 'COLABORADOR'
-            }
+            where: { email: 'colab_test@gmail.com' },
+            update: { perfil: 'COLABORADOR', ativo: true, deletadoEm: null },
+            create: { email: 'colab_test@gmail.com', nome: 'Colab Test 1', senha: hashedSenha, perfil: 'COLABORADOR' }
+        });
+
+        await prisma.user.upsert({
+            where: { email: 'outro_test@gmail.com' },
+            update: { perfil: 'COLABORADOR', ativo: true, deletadoEm: null },
+            create: { email: 'outro_test@gmail.com', nome: 'Colab Test 2', senha: hashedSenha, perfil: 'COLABORADOR' }
         });
 
         const [resColab, resColab2, resGestor, resFin] = await Promise.all([
-            request(app).post('/auth/login').send({ email: 'colaborador@gmail.com', senha: '12345678' }),
-            request(app).post('/auth/login').send({ email: 'outro@gmail.com', senha: '12345678' }),
+            request(app).post('/auth/login').send({ email: 'colab_test@gmail.com', senha: '12345678' }),
+            request(app).post('/auth/login').send({ email: 'outro_test@gmail.com', senha: '12345678' }),
             request(app).post('/auth/login').send({ email: 'gestor@gmail.com', senha: '12345678' }),
             request(app).post('/auth/login').send({ email: 'financeiro@gmail.com', senha: '12345678' })
         ]);

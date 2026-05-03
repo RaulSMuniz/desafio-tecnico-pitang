@@ -16,28 +16,24 @@ describe('Auth Flow', () => {
         expect(response.body.user.email).toBe('colaborador@gmail.com');
     });
 
-    it('should return 401 for invalid credentials', async () => {
-        const response = await request(app)
-            .post('/auth/login')
-            .send({
-                email: 'wrong@gmail.com',
-                senha: 'wrong_password'
-            });
+    it('should return 401 for invalid credentials (wrong password)', async () => {
+        const response = await request(app).post('/auth/login').send({
+            email: 'admin@gmail.com',
+            senha: 'wrongpassword'
+        });
 
         expect(response.status).toBe(401);
         expect(response.body.message).toBe('Credenciais inválidas');
     });
 
-    it('should return 401 for invalid user (non-active user)', async () => {
-        const response = await request(app)
-            .post('/auth/login')
-            .send({
-                email: 'usuarioinativo@gmail.com',
-                senha: '12345678'
-            });
+    it('should return 401 for invalid user (non-existent or inactive)', async () => {
+        const response = await request(app).post('/auth/login').send({
+            email: 'nonexistent@gmail.com',
+            senha: 'anypassword'
+        });
 
         expect(response.status).toBe(401);
-        expect(response.body.message).toBe('Credenciais inválidas');
+        expect(response.body.message).toBe('Usuário não encontrado ou credenciais inválidas');
     });
 
     it('should return 400 for invalid email', async () => {
