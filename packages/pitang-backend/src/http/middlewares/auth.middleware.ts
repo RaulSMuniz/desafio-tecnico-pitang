@@ -1,11 +1,12 @@
 import type { NextFunction, Request, Response } from "express";
 import jsonwebtoken from "jsonwebtoken";
 import { env } from "../../core/EnvVars.js";
+import { prisma } from "../../core/PrismaClient.js";
 
 const allowedPaths = {
     "GET": ["/"],
-    "POST": ["/login", "/users"],
-    "DELETE": ["/users/:id"],
+    "POST": ["/auth/login"],
+    "DELETE": [],
 } as const
 
 function matchPath(path: string, pattern: string): boolean {
@@ -17,7 +18,7 @@ function matchPath(path: string, pattern: string): boolean {
     return path === pattern;
 }
 
-export function authMiddleware(
+export async function authMiddleware(
     request: Request,
     response: Response,
     next: NextFunction,
@@ -39,8 +40,18 @@ export function authMiddleware(
     const [, token = ""] = authorization.split(" ");
 
     try {
-        (request.user as any) = jsonwebtoken.verify(token, env.JWT_SECRET);
+        const decoded = jsonwebtoken.verify(token, env.JWT_SECRET) as any;
 
+        const user = await prisma.user.findUnique({
+            where: { id: decoded.sub || decoded.id },
+            select: { ativo: true, deletadoEm: true }
+        });
+
+        if (!user || !user.ativo || user.deletadoEm !== null) {
+            return response.status(401).json({ message: "User is inactive or not found" });
+        }
+
+        (request.user as any) = decoded;
         next();
     } catch (error) {
         response.status(401).json({ message: "Not authorized" });
@@ -58,6 +69,15 @@ export async function ensureAuthenticated(req: Request, res: Response, next: Nex
 
     try {
         const decoded = jsonwebtoken.verify(token || "", env.JWT_SECRET) as { sub: string, perfil: string };
+
+        const user = await prisma.user.findUnique({
+            where: { id: decoded.sub },
+            select: { ativo: true, deletadoEm: true }
+        });
+
+        if (!user || !user.ativo || user.deletadoEm !== null) {
+            return res.status(401).json({ message: "User is inactive or not found" });
+        }
 
         req.user = {
             id: decoded.sub,

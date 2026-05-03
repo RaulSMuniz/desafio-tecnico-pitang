@@ -139,7 +139,10 @@ export async function deleteUser(req: Request, res: Response, next: NextFunction
 
         await prisma.user.update({
             where: { id },
-            data: { deletadoEm: new Date() }
+            data: { 
+                deletadoEm: new Date(),
+                ativo: false 
+            }
         });
 
         return res.status(200).json({

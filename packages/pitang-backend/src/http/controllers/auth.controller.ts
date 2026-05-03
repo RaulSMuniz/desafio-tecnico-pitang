@@ -29,7 +29,14 @@ export async function login(req: Request, res: Response, next: NextFunction) {
 
         if (!user) {
             return res.status(401).json({
-                message: "Credenciais inválidas",
+                message: "Usuário não encontrado ou credenciais inválidas",
+                statusCode: 401
+            });
+        }
+
+        if (!user.ativo) {
+            return res.status(401).json({
+                message: "Esta conta está desativada. Entre em contato com o administrador.",
                 statusCode: 401
             });
         }
