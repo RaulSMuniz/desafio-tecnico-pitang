@@ -5,7 +5,7 @@ interface StatsCardProps {
     value: string | number;
     icon?: LucideIcon;
     description?: string;
-    variant?: 'default' | 'warning' | 'success';
+    variant?: 'default' | 'warning' | 'success' | 'danger';
 }
 
 export function StatsCard({ label, value, icon: Icon, description, variant = 'default' }: StatsCardProps) {
@@ -13,6 +13,7 @@ export function StatsCard({ label, value, icon: Icon, description, variant = 'de
         default: 'text-slate-900',
         warning: 'text-yellow-600',
         success: 'text-green-600',
+        danger: 'text-red-600',
     };
 
     return (

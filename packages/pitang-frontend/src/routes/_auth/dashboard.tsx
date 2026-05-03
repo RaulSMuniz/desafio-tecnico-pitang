@@ -138,7 +138,7 @@ function DashboardPage() {
         </p>
       </div>
 
-      <div className={`grid grid-cols-1 ${isFinanceiro ? 'md:grid-cols-2' : 'md:grid-cols-3'} gap-6`}>
+      <div className={`grid grid-cols-1 ${isFinanceiro ? 'md:grid-cols-2' : 'md:grid-cols-2 lg:grid-cols-4'} gap-6`}>
         {isGestor && (
           <>
             <StatsCard
@@ -158,8 +158,15 @@ function DashboardPage() {
               label="Rejeitados"
               value={stats.rejected}
               icon={LayoutDashboard}
-              variant="default"
+              variant="danger"
               description="Total de negativas"
+            />
+            <StatsCard
+              label="Total Pago"
+              value={new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(stats.totalPaidValue)}
+              icon={BadgeDollarSign}
+              variant="success"
+              description="Volume liquidado"
             />
           </>
         )}
@@ -186,7 +193,7 @@ function DashboardPage() {
         {(isColaborador || user?.perfil === 'ADMIN') && (
           <>
             <StatsCard
-              label="Total de Solicitações"
+              label="Total de Pedidos"
               value={stats.totalCount}
               icon={LayoutDashboard}
               description="Seu histórico total"
@@ -197,6 +204,13 @@ function DashboardPage() {
               icon={Clock}
               variant="warning"
               description="Em fila de espera"
+            />
+            <StatsCard
+              label="Pedidos Rejeitados"
+              value={stats.rejected}
+              icon={LayoutDashboard}
+              variant="danger"
+              description="Necessitam atenção"
             />
             <StatsCard
               label="Total Reembolsado"
