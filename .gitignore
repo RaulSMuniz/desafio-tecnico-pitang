@@ -1,10 +1,27 @@
-# Ignora tudo na raiz
+# Ignora tudo por padrão
 /*
 
-# Abre exceção apenas para o que queremos manter
+# Exceções (Arquivos e pastas que DEVEM ir para o Git)
 !packages/
 !.gitignore
 !README.md
 !.vscode/
+!package.json
+!package-lock.json
+
+# Bloqueios específicos (O que NÃO deve ir mesmo dentro das pastas acima)
+**/node_modules/
+**/.env
+**/dist/
+**/build/
+**/.next/
+**/.cache/
+**/npm-debug.log*
+**/yarn-debug.log*
+**/yarn-error.log*
+**/.DS_Store
+Thumbs.db
+
+# Arquivos de planejamento e desafio (opcional manter ignorado)
 desafio-estags-pitang.html
 implementation_plan.md
