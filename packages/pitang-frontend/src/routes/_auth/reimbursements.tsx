@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button"
 import { useAuth } from '@/hooks/use-auth'
 import fetcher from '@/api/fetcher'
 import { toast } from 'sonner'
+import { PageTitle } from '@/components/page-title'
 import {
     Plus,
     ClipboardList,
@@ -130,10 +131,13 @@ function ReimbursementsKanban() {
         { title: "Finalizados", status: ['PAGO', 'REJEITADO', 'CANCELADO'], icon: History },
     ]
 
-    if (loading) return <div className="flex h-96 items-center justify-center font-bold text-slate-900 uppercase tracking-tighter animate-pulse">Carregando painel...</div>
+    if (loading) return <div className="flex h-96 items-center justify-center font-bold text-slate-900 uppercase tracking-tighter animate-pulse">Carregando painel...
+        <PageTitle title="Solicitações de Reembolso" />
+    </div>
 
     return (
         <div className="flex flex-col h-full w-full overflow-hidden text-left">
+            <PageTitle title="Solicitações de Reembolso" />
             <div className="flex items-center justify-between px-6 mb-6 shrink-0 text-left">
                 <div className="text-left">
                     <h1 className="text-2xl font-bold tracking-tight text-slate-900">Solicitações de Reembolsos</h1>

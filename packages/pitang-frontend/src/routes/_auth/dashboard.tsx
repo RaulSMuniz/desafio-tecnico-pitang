@@ -3,9 +3,9 @@ import { useAuth } from '@/hooks/use-auth'
 import { useEffect, useState, useMemo } from 'react'
 import fetcher from '@/api/fetcher'
 import { StatsCard, DashboardEmptyState } from '@/components/dashboard-components'
+import { PageTitle } from '@/components/page-title'
 import { LayoutDashboard, Clock, BadgeDollarSign } from 'lucide-react'
 import dayjs from 'dayjs';
-
 
 export const Route = createFileRoute('/_auth/dashboard')({
   component: DashboardPage,
@@ -22,6 +22,7 @@ function DashboardPage() {
         setLoading(true);
         const response = await fetcher.get<any>('/reimbursements');
         const data = response.data?.data || response.data || response;
+
         setReimbursements(Array.isArray(data) ? data : []);
       } catch (error) {
         console.error("Erro ao carregar dados do dashboard", error);
@@ -113,6 +114,7 @@ function DashboardPage() {
   if (loading) {
     return (
       <div className="flex h-96 items-center justify-center">
+        <PageTitle title="Dashboard" />
         <div className="flex flex-col items-center gap-2">
           <div className="h-8 w-8 animate-spin rounded-full border-4 border-orange-600 border-t-transparent"></div>
           <p className="text-sm font-bold text-slate-500 uppercase tracking-tighter">Sincronizando dados...</p>
@@ -123,6 +125,7 @@ function DashboardPage() {
 
   return (
     <div className="space-y-10 animate-in fade-in slide-in-from-bottom-4 duration-700">
+      <PageTitle title="Dashboard" />
       <div className="flex flex-col gap-1">
         <p className="text-[10px] font-black text-orange-600 uppercase tracking-[0.2em]">Painel de Controle</p>
         <h1 className="text-4xl font-black text-slate-900 tracking-tight">
@@ -243,14 +246,14 @@ function DashboardPage() {
                         Por: <span className="font-bold text-slate-700">
                           {(() => {
                             // Conforme o backend, o campo é 'historicos' e contém um objeto 'usuario' com 'nome'
-                            const lastAction = r.historicos && r.historicos.length > 0 
-                              ? r.historicos[r.historicos.length - 1] 
+                            const lastAction = r.historicos && r.historicos.length > 0
+                              ? r.historicos[r.historicos.length - 1]
                               : null;
-                            
+
                             if (!lastAction || !lastAction.usuario) {
                               return r.solicitante?.nome === user?.nome ? 'Você' : (r.solicitante?.nome || 'Sistema');
                             }
-                            
+
                             const actorName = lastAction.usuario.nome;
                             return actorName === user?.nome ? 'Você' : actorName;
                           })()}
