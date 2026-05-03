@@ -53,6 +53,7 @@ export function LoginForm({
       className={cn("flex flex-col gap-6 w-full", className)}
       {...props}
       onSubmit={handleSubmit}
+      noValidate
     >
       <FieldGroup className="flex flex-col gap-4">
         <div className="flex flex-col items-center gap-2 text-center mb-4">
