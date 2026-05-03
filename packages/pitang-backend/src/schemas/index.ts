@@ -21,7 +21,7 @@ export const loginSchema = z.object({
 
 export const categorySchema = z.object({
     nome: z.string().min(3, "O nome da categoria deve ter pelo menos 3 caracteres"),
-    ativo: z.boolean(),
+    ativo: z.boolean().optional().default(true),
 });
 
 export const reimbursementSchema = z.object({
@@ -39,7 +39,7 @@ export const rejectionSchema = z.object({
 
 export const attachmentSchema = z.object({
     nomeArquivo: z.string().min(1, "O nome do arquivo é obrigatório"),
-    tipoArquivo: z.string().regex(/^(image\/(jpeg|png|jpg)|application\/pdf)$/, "Formato de arquivo não permitido. Use apenas Imagens ou PDF."),
+    tipoArquivo: z.string().regex(/^(image\/(jpeg|png|jpg)|application\/pdf)$/, "Formato de arquivo não permitido. Use apenas: image/jpeg, image/png, image/jpg ou application/pdf."),
 })
 
 export const paramId = z.object({
