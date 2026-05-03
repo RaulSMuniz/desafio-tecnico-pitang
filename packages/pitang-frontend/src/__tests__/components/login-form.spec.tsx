@@ -1,11 +1,9 @@
 import '@testing-library/jest-dom';
-import React from 'react';
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { LoginForm } from '@/components/login-form';
 import { toast } from 'sonner';
 
-// Mock the sonner toast to check if it's being called correctly
 jest.mock('sonner', () => ({
   toast: {
     error: jest.fn(),
@@ -34,7 +32,6 @@ describe('LoginForm', () => {
     const submitButton = screen.getByRole('button', { name: /entrar/i });
     fireEvent.click(submitButton);
 
-    // Zod validation should catch empty fields and trigger toast.error
     await waitFor(() => {
       expect(toast.error).toHaveBeenCalledWith('Email inválido');
     });
