@@ -27,7 +27,7 @@ export function CreateReimbursementPage() {
   const navigate = useNavigate()
   const [categories, setCategories] = useState<any[]>([])
   const [loadingCats, setLoadingCats] = useState(true)
-  const [anexoSimulado, setAnexoSimulado] = useState<{ nomeArquivo: string, tipoArquivo: string } | null>(null)
+  const [anexosSimulados, setAnexosSimulados] = useState<any[]>([])
 
   const {
     register,
@@ -54,10 +54,11 @@ export function CreateReimbursementPage() {
   }, [])
 
   async function onSubmit(values: z.infer<typeof editReimbursementSchema>) {
-    if (anexoSimulado) {
-      const attachmentResult = attachmentSchema.safeParse(anexoSimulado)
+    // Validar todos os anexos antes de começar
+    for (const anexo of anexosSimulados) {
+      const attachmentResult = attachmentSchema.safeParse(anexo)
       if (!attachmentResult.success) {
-        return toast.error(`Anexo: ${attachmentResult.error.issues[0].message}`)
+        return toast.error(`Anexo "${anexo.nomeArquivo || 'Sem nome'}": ${attachmentResult.error.issues[0].message}`)
       }
     }
 
@@ -66,18 +67,22 @@ export function CreateReimbursementPage() {
         ...values,
         dataDespesa: dayjs(values.dataDespesa).toISOString(),
         categoriaId: Number(values.categoriaId),
-        status: 'ENVIADO'
       }
 
       const response = await fetcher.post<any>('/reimbursements', payload)
       const reimbursementId = response.data?.data?.id || response.data?.id || response.id
 
-      if (anexoSimulado && reimbursementId) {
-        await fetcher.post(`/reimbursements/${reimbursementId}/attachments`, anexoSimulado)
+      // Enviar todos os anexos em sequência
+      if (reimbursementId && anexosSimulados.length > 0) {
+        await Promise.all(
+          anexosSimulados.map(anexo =>
+            fetcher.post(`/reimbursements/${reimbursementId}/attachments`, anexo)
+          )
+        )
       }
 
       window.dispatchEvent(new Event('refreshKanban'))
-      toast.success("Solicitação criada!")
+      toast.success("Solicitação criada com sucesso!")
       navigate({ to: '/reimbursements' })
     } catch (error: any) {
       toast.error(error.info?.message || error.response?.data?.message || "Erro na operação")
@@ -163,48 +168,68 @@ export function CreateReimbursementPage() {
 
             <div className="space-y-3 text-left">
               <div className="flex items-center justify-between ml-1 text-left">
-                <label className="text-sm font-bold text-gray-800">Anexo (Simulado)</label>
-                {!anexoSimulado && (
-                  <Button
-                    type="button"
-                    variant="outline"
-                    size="sm"
-                    onClick={() => setAnexoSimulado({ nomeArquivo: '', tipoArquivo: 'PDF' })}
-                    className="h-7 rounded-lg text-[10px] font-bold uppercase"
-                  >
-                    <Paperclip className="h-3 w-3 mr-1" /> Adicionar
-                  </Button>
-                )}
+                <label className="text-sm font-bold text-gray-800">Anexos (Simulado)</label>
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setAnexosSimulados([...anexosSimulados, { nomeArquivo: '', tipoArquivo: 'application/pdf' }])}
+                  className="h-7 rounded-lg text-[10px] font-bold uppercase"
+                >
+                  <Paperclip className="h-3 w-3 mr-1" /> Adicionar Anexo
+                </Button>
               </div>
 
-              {anexoSimulado && (
-                <div className="flex gap-2 items-start bg-slate-50 p-3 rounded-xl border border-slate-100 text-left">
-                  <div className="flex-1 space-y-2 text-left">
-                    <Input
-                      value={anexoSimulado.nomeArquivo}
-                      onChange={(e) => setAnexoSimulado({ ...anexoSimulado, nomeArquivo: e.target.value })}
-                      placeholder="Nome do arquivo"
-                      className="h-9 text-xs rounded-lg border-slate-200"
-                    />
-                    <Select
-                      onValueChange={(val) => setAnexoSimulado({ ...anexoSimulado, tipoArquivo: val as string })}
-                      defaultValue={anexoSimulado.tipoArquivo}
+              <div className="space-y-2">
+                {anexosSimulados.map((anexo, index) => (
+                  <div key={index} className="flex gap-2 items-start bg-slate-50 p-3 rounded-xl border border-slate-100 text-left animate-in slide-in-from-top-2 duration-200">
+                    <div className="flex-1 space-y-2 text-left">
+                      <Input
+                        value={anexo.nomeArquivo}
+                        onChange={(e) => {
+                          const newAnexos = [...anexosSimulados];
+                          newAnexos[index].nomeArquivo = e.target.value;
+                          setAnexosSimulados(newAnexos);
+                        }}
+                        placeholder="Nome do arquivo"
+                        className="h-9 text-xs rounded-lg border-slate-200"
+                      />
+                      <Select
+                        onValueChange={(val) => {
+                          const newAnexos = [...anexosSimulados];
+                          newAnexos[index].tipoArquivo = val;
+                          setAnexosSimulados(newAnexos);
+                        }}
+                        defaultValue={anexo.tipoArquivo}
+                      >
+                        <SelectTrigger className="h-9 text-xs rounded-lg border-slate-200 bg-white">
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="application/pdf">PDF</SelectItem>
+                          <SelectItem value="image/png">PNG</SelectItem>
+                          <SelectItem value="image/jpeg">JPEG</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="icon"
+                      onClick={() => setAnexosSimulados(anexosSimulados.filter((_, i) => i !== index))}
+                      className="text-red-500"
                     >
-                      <SelectTrigger className="h-9 text-xs rounded-lg border-slate-200 bg-white">
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="PDF">PDF</SelectItem>
-                        <SelectItem value="PNG">PNG</SelectItem>
-                        <SelectItem value="JPEG">JPEG</SelectItem>
-                      </SelectContent>
-                    </Select>
+                      <X className="h-4 w-4" />
+                    </Button>
                   </div>
-                  <Button type="button" variant="ghost" size="icon" onClick={() => setAnexoSimulado(null)} className="text-red-500">
-                    <X className="h-4 w-4" />
-                  </Button>
-                </div>
-              )}
+                ))}
+
+                {anexosSimulados.length === 0 && (
+                  <div className="p-4 bg-slate-50 rounded-2xl border border-dashed border-slate-200 text-center">
+                    <p className="text-[10px] text-slate-400 font-bold uppercase tracking-widest">Nenhum anexo adicionado</p>
+                  </div>
+                )}
+              </div>
             </div>
 
             <div className="flex justify-end items-center gap-4 pt-6 border-t border-slate-100 mt-4">

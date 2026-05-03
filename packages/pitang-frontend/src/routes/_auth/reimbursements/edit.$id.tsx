@@ -28,7 +28,7 @@ export function EditReimbursementPage() {
   const navigate = useNavigate()
   const [loading, setLoading] = useState(true)
   const [categories, setCategories] = useState<any[]>([])
-  const [anexoSimulado, setAnexoSimulado] = useState<{ nomeArquivo: string, tipoArquivo: string } | null>(null)
+  const [anexosSimulados, setAnexosSimulados] = useState<any[]>([])
 
   const {
     register,
@@ -58,11 +58,11 @@ export function EditReimbursementPage() {
         const activeCats = allCats.filter((cat: any) => cat.ativo || cat.id === reimbursement.categoriaId)
         setCategories(activeCats)
 
-        const attachments = reimbursement.attachments || reimbursement.anexos || []
-        if (attachments.length > 0) {
-          const last = attachments[attachments.length - 1]
-          setAnexoSimulado({ nomeArquivo: last.nomeArquivo, tipoArquivo: last.tipoArquivo })
-        }
+        const attachments = (reimbursement.attachments || reimbursement.anexos || []).map((a: any) => ({
+          ...a,
+          isExisting: true // Marcar como existente para não reenviar no submit
+        }))
+        setAnexosSimulados(attachments)
 
         reset({
           descricao: reimbursement.descricao || '',
@@ -81,10 +81,13 @@ export function EditReimbursementPage() {
   }, [id, reset, navigate])
 
   async function onSubmit(values: z.infer<typeof editReimbursementSchema>) {
-    if (anexoSimulado) {
-      const attachmentResult = attachmentSchema.safeParse(anexoSimulado)
+    // Validar apenas os novos anexos antes de começar
+    const novosAnexos = anexosSimulados.filter(a => !a.isExisting);
+
+    for (const anexo of novosAnexos) {
+      const attachmentResult = attachmentSchema.safeParse(anexo)
       if (!attachmentResult.success) {
-        return toast.error(`Anexo: ${attachmentResult.error.issues[0].message}`)
+        return toast.error(`Anexo "${anexo.nomeArquivo || 'Sem nome'}": ${attachmentResult.error.issues[0].message}`)
       }
     }
 
@@ -97,8 +100,13 @@ export function EditReimbursementPage() {
 
       await fetcher.put(`/reimbursements/${id}`, payload)
 
-      if (anexoSimulado) {
-        await fetcher.post(`/reimbursements/${id}/attachments`, anexoSimulado)
+      // Enviar apenas os anexos que não existiam previamente
+      if (novosAnexos.length > 0) {
+        await Promise.all(
+          novosAnexos.map(anexo =>
+            fetcher.post(`/reimbursements/${id}/attachments`, anexo)
+          )
+        )
       }
 
       window.dispatchEvent(new Event('refreshKanban'))
@@ -193,48 +201,79 @@ export function EditReimbursementPage() {
 
             <div className="space-y-3 text-left">
               <div className="flex items-center justify-between ml-1 text-left">
-                <label className="text-sm font-bold text-gray-800 text-left">Anexo (Simulado)</label>
-                {!anexoSimulado && (
-                  <Button
-                    type="button"
-                    variant="outline"
-                    size="sm"
-                    onClick={() => setAnexoSimulado({ nomeArquivo: '', tipoArquivo: 'PDF' })}
-                    className="h-7 rounded-lg text-[10px] font-bold uppercase"
-                  >
-                    <Paperclip className="h-3 w-3 mr-1" /> Adicionar
-                  </Button>
-                )}
+                <label className="text-sm font-bold text-gray-800 text-left">Anexos (Simulado)</label>
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setAnexosSimulados([...anexosSimulados, { nomeArquivo: '', tipoArquivo: 'application/pdf', isExisting: false }])}
+                  className="h-7 rounded-lg text-[10px] font-bold uppercase"
+                >
+                  <Paperclip className="h-3 w-3 mr-1" /> Adicionar Anexo
+                </Button>
               </div>
 
-              {anexoSimulado && (
-                <div className="flex gap-2 items-start bg-slate-50 p-3 rounded-xl border border-slate-100 text-left">
-                  <div className="flex-1 space-y-2 text-left">
-                    <Input
-                      value={anexoSimulado.nomeArquivo}
-                      onChange={(e) => setAnexoSimulado({ ...anexoSimulado, nomeArquivo: e.target.value })}
-                      placeholder="Nome do arquivo"
-                      className="h-9 text-xs rounded-lg border-slate-200 text-left"
-                    />
-                    <Select
-                      onValueChange={(val) => setAnexoSimulado({ ...anexoSimulado, tipoArquivo: val as string })}
-                      value={anexoSimulado.tipoArquivo}
-                    >
-                      <SelectTrigger className="h-9 text-xs rounded-lg border-slate-200 bg-white text-left">
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent className="text-left">
-                        <SelectItem value="PDF">PDF</SelectItem>
-                        <SelectItem value="PNG">PNG</SelectItem>
-                        <SelectItem value="JPEG">JPEG</SelectItem>
-                      </SelectContent>
-                    </Select>
+              <div className="space-y-2">
+                {anexosSimulados.map((anexo, index) => (
+                  <div key={index} className={`flex gap-2 items-start p-3 rounded-xl border text-left ${anexo.isExisting ? 'bg-slate-50 border-slate-200' : 'bg-orange-50/30 border-orange-100 animate-in slide-in-from-top-2 duration-200'}`}>
+                    <div className="flex-1 space-y-2 text-left">
+                      <Input
+                        value={anexo.nomeArquivo}
+                        onChange={(e) => {
+                          if (anexo.isExisting) return;
+                          const newAnexos = [...anexosSimulados];
+                          newAnexos[index].nomeArquivo = e.target.value;
+                          setAnexosSimulados(newAnexos);
+                        }}
+                        placeholder="Nome do arquivo"
+                        disabled={anexo.isExisting}
+                        className={`h-9 text-xs rounded-lg ${anexo.isExisting ? 'bg-slate-100 border-transparent' : 'border-slate-200 bg-white'}`}
+                      />
+                      <Select
+                        onValueChange={(val) => {
+                          if (anexo.isExisting) return;
+                          const newAnexos = [...anexosSimulados];
+                          newAnexos[index].tipoArquivo = val;
+                          setAnexosSimulados(newAnexos);
+                        }}
+                        value={anexo.tipoArquivo}
+                        disabled={anexo.isExisting}
+                      >
+                        <SelectTrigger className={`h-9 text-xs rounded-lg ${anexo.isExisting ? 'bg-slate-100 border-transparent' : 'border-slate-200 bg-white'}`}>
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="application/pdf">PDF</SelectItem>
+                          <SelectItem value="image/png">PNG</SelectItem>
+                          <SelectItem value="image/jpeg">JPEG</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    {!anexo.isExisting && (
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="icon"
+                        onClick={() => setAnexosSimulados(anexosSimulados.filter((_, i) => i !== index))}
+                        className="text-red-500"
+                      >
+                        <X className="h-4 w-4" />
+                      </Button>
+                    )}
+                    {anexo.isExisting && (
+                      <div className="p-2 text-[10px] font-bold text-slate-400 bg-slate-200 rounded-lg">
+                        SALVO
+                      </div>
+                    )}
                   </div>
-                  <Button type="button" variant="ghost" size="icon" onClick={() => setAnexoSimulado(null)} className="text-red-500">
-                    <X className="h-4 w-4" />
-                  </Button>
-                </div>
-              )}
+                ))}
+
+                {anexosSimulados.length === 0 && (
+                  <div className="p-4 bg-slate-50 rounded-2xl border border-dashed border-slate-200 text-center">
+                    <p className="text-[10px] text-slate-400 font-bold uppercase tracking-widest">Nenhum anexo adicionado</p>
+                  </div>
+                )}
+              </div>
             </div>
 
             <div className="flex justify-end items-center gap-4 pt-6 border-t border-slate-100 mt-4 text-left">
