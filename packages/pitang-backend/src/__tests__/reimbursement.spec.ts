@@ -256,5 +256,56 @@ describe('Reimbursement Flow (Business Rules)', () => {
             const data = res.body.data || res.body;
             expect(data.status).toBe('CANCELADO');
         });
+
+        it('should return 400 when creating a reimbursement with a future date', async () => {
+            const tomorrow = new Date();
+            tomorrow.setDate(tomorrow.getDate() + 1);
+
+            const res = await request(app)
+                .post('/reimbursements')
+                .set('Authorization', `Bearer ${tokenColaborador}`)
+                .send({
+                    descricao: 'Viagem Futura',
+                    valor: 500,
+                    dataDespesa: tomorrow,
+                    categoriaId: categoriaId
+                });
+
+            expect(res.status).toBe(400);
+        });
+
+        it('should return 403 when a manager tries to approve a reimbursement they created as a collaborator', async () => {
+            const resCreate = await request(app)
+                .post('/reimbursements')
+                .set('Authorization', `Bearer ${tokenColaborador}`)
+                .send({
+                    descricao: 'Meu Reembolso de Viagem',
+                    valor: 150,
+                    dataDespesa: new Date(),
+                    categoriaId: categoriaId
+                });
+
+            expect(resCreate.status).toBe(201);
+            const myId = resCreate.body.data.id;
+            const myUserId = resCreate.body.data.solicitanteId;
+
+            await request(app).post(`/reimbursements/${myId}/submit`).set('Authorization', `Bearer ${tokenColaborador}`);
+
+            await prisma.user.update({
+                where: { id: myUserId },
+                data: { perfil: 'GESTOR' }
+            });
+
+            const resApprove = await request(app)
+                .post(`/reimbursements/${myId}/approve`)
+                .set('Authorization', `Bearer ${tokenColaborador}`);
+
+            expect(resApprove.status).toBe(403);
+
+            await prisma.user.update({
+                where: { id: myUserId },
+                data: { perfil: 'COLABORADOR' }
+            });
+        });
     });
 });
