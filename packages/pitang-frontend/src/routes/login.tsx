@@ -19,7 +19,7 @@ function LoginComponent() {
   const handleSignIn = async (data: LoginData) => {
     try {
       await signIn(data)
-      toast.success("Bem-vindo de volta!")
+      toast.success("Bem-vindo!")
       navigate({ to: '/dashboard' })
     } catch (error: any) {
       if (error.status === 401) {
