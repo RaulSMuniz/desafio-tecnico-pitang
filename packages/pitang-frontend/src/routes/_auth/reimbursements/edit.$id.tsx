@@ -17,7 +17,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select"
-import { editReimbursementSchema } from '@/zodSchemas'
+import { editReimbursementSchema, attachmentSchema } from '@/zodSchemas'
 
 export const Route = createFileRoute('/_auth/reimbursements/edit/$id')({
   component: EditReimbursementPage,
@@ -81,6 +81,13 @@ export function EditReimbursementPage() {
   }, [id, reset, navigate])
 
   async function onSubmit(values: z.infer<typeof editReimbursementSchema>) {
+    if (anexoSimulado) {
+      const attachmentResult = attachmentSchema.safeParse(anexoSimulado)
+      if (!attachmentResult.success) {
+        return toast.error(`Anexo: ${attachmentResult.error.issues[0].message}`)
+      }
+    }
+
     try {
       const payload = {
         ...values,
