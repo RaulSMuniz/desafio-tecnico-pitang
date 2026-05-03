@@ -16,7 +16,6 @@ import { Route as AuthUsersRouteImport } from './routes/_auth/users'
 import { Route as AuthReimbursementsRouteImport } from './routes/_auth/reimbursements'
 import { Route as AuthDashboardRouteImport } from './routes/_auth/dashboard'
 import { Route as AuthCategoriesRouteImport } from './routes/_auth/categories'
-import { Route as AuthReimbursementsIndexRouteImport } from './routes/_auth/reimbursements/index'
 import { Route as AuthReimbursementsCreateRouteImport } from './routes/_auth/reimbursements/create'
 import { Route as AuthReimbursementsEditIdRouteImport } from './routes/_auth/reimbursements/edit.$id'
 
@@ -54,11 +53,6 @@ const AuthCategoriesRoute = AuthCategoriesRouteImport.update({
   path: '/categories',
   getParentRoute: () => AuthRoute,
 } as any)
-const AuthReimbursementsIndexRoute = AuthReimbursementsIndexRouteImport.update({
-  id: '/',
-  path: '/',
-  getParentRoute: () => AuthReimbursementsRoute,
-} as any)
 const AuthReimbursementsCreateRoute =
   AuthReimbursementsCreateRouteImport.update({
     id: '/create',
@@ -80,7 +74,6 @@ export interface FileRoutesByFullPath {
   '/reimbursements': typeof AuthReimbursementsRouteWithChildren
   '/users': typeof AuthUsersRoute
   '/reimbursements/create': typeof AuthReimbursementsCreateRoute
-  '/reimbursements/': typeof AuthReimbursementsIndexRoute
   '/reimbursements/edit/$id': typeof AuthReimbursementsEditIdRoute
 }
 export interface FileRoutesByTo {
@@ -88,9 +81,9 @@ export interface FileRoutesByTo {
   '/login': typeof LoginRoute
   '/categories': typeof AuthCategoriesRoute
   '/dashboard': typeof AuthDashboardRoute
+  '/reimbursements': typeof AuthReimbursementsRouteWithChildren
   '/users': typeof AuthUsersRoute
   '/reimbursements/create': typeof AuthReimbursementsCreateRoute
-  '/reimbursements': typeof AuthReimbursementsIndexRoute
   '/reimbursements/edit/$id': typeof AuthReimbursementsEditIdRoute
 }
 export interface FileRoutesById {
@@ -103,7 +96,6 @@ export interface FileRoutesById {
   '/_auth/reimbursements': typeof AuthReimbursementsRouteWithChildren
   '/_auth/users': typeof AuthUsersRoute
   '/_auth/reimbursements/create': typeof AuthReimbursementsCreateRoute
-  '/_auth/reimbursements/': typeof AuthReimbursementsIndexRoute
   '/_auth/reimbursements/edit/$id': typeof AuthReimbursementsEditIdRoute
 }
 export interface FileRouteTypes {
@@ -116,7 +108,6 @@ export interface FileRouteTypes {
     | '/reimbursements'
     | '/users'
     | '/reimbursements/create'
-    | '/reimbursements/'
     | '/reimbursements/edit/$id'
   fileRoutesByTo: FileRoutesByTo
   to:
@@ -124,9 +115,9 @@ export interface FileRouteTypes {
     | '/login'
     | '/categories'
     | '/dashboard'
+    | '/reimbursements'
     | '/users'
     | '/reimbursements/create'
-    | '/reimbursements'
     | '/reimbursements/edit/$id'
   id:
     | '__root__'
@@ -138,7 +129,6 @@ export interface FileRouteTypes {
     | '/_auth/reimbursements'
     | '/_auth/users'
     | '/_auth/reimbursements/create'
-    | '/_auth/reimbursements/'
     | '/_auth/reimbursements/edit/$id'
   fileRoutesById: FileRoutesById
 }
@@ -199,13 +189,6 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthCategoriesRouteImport
       parentRoute: typeof AuthRoute
     }
-    '/_auth/reimbursements/': {
-      id: '/_auth/reimbursements/'
-      path: '/'
-      fullPath: '/reimbursements/'
-      preLoaderRoute: typeof AuthReimbursementsIndexRouteImport
-      parentRoute: typeof AuthReimbursementsRoute
-    }
     '/_auth/reimbursements/create': {
       id: '/_auth/reimbursements/create'
       path: '/create'
@@ -225,13 +208,11 @@ declare module '@tanstack/react-router' {
 
 interface AuthReimbursementsRouteChildren {
   AuthReimbursementsCreateRoute: typeof AuthReimbursementsCreateRoute
-  AuthReimbursementsIndexRoute: typeof AuthReimbursementsIndexRoute
   AuthReimbursementsEditIdRoute: typeof AuthReimbursementsEditIdRoute
 }
 
 const AuthReimbursementsRouteChildren: AuthReimbursementsRouteChildren = {
   AuthReimbursementsCreateRoute: AuthReimbursementsCreateRoute,
-  AuthReimbursementsIndexRoute: AuthReimbursementsIndexRoute,
   AuthReimbursementsEditIdRoute: AuthReimbursementsEditIdRoute,
 }
 
