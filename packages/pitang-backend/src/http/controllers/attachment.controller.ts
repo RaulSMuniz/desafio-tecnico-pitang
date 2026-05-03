@@ -67,30 +67,38 @@ export async function getAttachmentById(req: Request, res: Response, next: NextF
     try {
         const paramIdResult = paramId.safeParse(req.params);
         if (!paramIdResult.success) {
-            return res.status(400).json({ message: "Dados de entrada inválidos", statusCode: 400 });
+            return res.status(400).json({ message: "ID do reembolso inválido", statusCode: 400 });
         }
 
-        const id = paramIdResult.data.id;
-        const attachment = await prisma.attachment.findUnique({
-            where: { id },
-            include: { solicitacao: true }
+        const solicitacaoId = paramIdResult.data.id;
+
+        const reimbursement = await prisma.reimbursement.findUnique({
+            where: { id: solicitacaoId }
         });
 
-        if (!attachment) {
-            return res.status(404).json({ message: "Anexo não encontrado", statusCode: 404 });
+        if (!reimbursement) {
+            return res.status(404).json({ message: "Reembolso não encontrado", statusCode: 404 });
         }
 
-        const isOwner = attachment.solicitacao.solicitanteId === req.user.id;
+        const isOwner = reimbursement.solicitanteId === req.user.id;
         const isPrivileged = ['GESTOR', 'FINANCEIRO', 'ADMIN'].includes(req.user.perfil as string);
 
         if (!isOwner && !isPrivileged) {
             return res.status(403).json({ message: "Acesso negado", statusCode: 403 });
         }
 
+        const attachments = await prisma.attachment.findMany({
+            where: { solicitacaoId }
+        });
+
+        if (!attachments) {
+            return res.status(404).json({ message: "Anexos não encontrados", statusCode: 404 });
+        }
+
         return res.status(200).json({
-            message: "Anexo encontrado com sucesso",
+            message: "Anexos listados com sucesso",
             statusCode: 200,
-            data: attachment
+            data: attachments
         });
     } catch (error) {
         next(error);
