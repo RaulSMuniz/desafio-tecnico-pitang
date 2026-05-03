@@ -2,6 +2,7 @@ import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, D
 import { Button } from "@/components/ui/button"
 import { Textarea } from "@/components/ui/textarea"
 import { useState } from 'react'
+import { rejectionSchema } from '@/zodSchemas'
 
 interface RejectionModalProps {
     isOpen: boolean
@@ -11,6 +12,7 @@ interface RejectionModalProps {
 
 export function RejectionModal({ isOpen, onClose, onConfirm }: RejectionModalProps) {
     const [text, setText] = useState('')
+    const isValid = rejectionSchema.safeParse({ justificativa: text }).success
 
     return (
         <Dialog open={isOpen} onOpenChange={onClose}>
@@ -33,7 +35,7 @@ export function RejectionModal({ isOpen, onClose, onConfirm }: RejectionModalPro
                     <Button variant="outline" onClick={onClose}>Cancelar</Button>
                     <Button
                         variant="destructive"
-                        disabled={text.trim().length < 5}
+                        disabled={!isValid}
                         onClick={() => {
                             onConfirm(text)
                             setText('')
