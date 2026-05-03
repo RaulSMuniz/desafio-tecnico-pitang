@@ -22,7 +22,16 @@ export const editReimbursementSchema = z.object({
 
 export const attachmentSchema = z.object({
     nomeArquivo: z.string().min(1, "Nome é obrigatório"),
-    tipoArquivo: z.string().min(1, "Tipo é obrigatório")
+    tipoArquivo: z.string().regex(/^(image\/(jpeg|png|jpg)|application\/pdf)$/, "Formato não permitido (apenas Imagens ou PDF)")
+})
+
+export const rejectionSchema = z.object({
+    justificativa: z.string().min(5, "A justificativa deve ter pelo menos 5 caracteres"),
+})
+
+export const categorySchema = z.object({
+    nome: z.string().min(3, "O nome da categoria deve ter pelo menos 3 caracteres"),
+    ativo: z.boolean().default(true),
 })
 
 export const createUserSchema = z.object({
