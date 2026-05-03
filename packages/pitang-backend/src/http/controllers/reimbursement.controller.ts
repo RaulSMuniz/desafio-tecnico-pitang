@@ -299,7 +299,17 @@ export async function putReimbursementById(req: Request, res: Response, next: Ne
 
 export async function submitReimbursement(req: Request, res: Response, next: NextFunction) {
     try {
-        const id = req.params.id as string;
+        const paramsResult = paramId.safeParse(req.params);
+
+        if (!paramsResult.success) {
+            return res.status(400).json({
+                message: "Dados de entrada inválidos",
+                errors: z.treeifyError(paramsResult.error),
+                statusCode: 400
+            });
+        }
+
+        const { id } = paramsResult.data;
 
         const reimbursement = await prisma.reimbursement.findUnique({
             where: { id }
@@ -316,6 +326,13 @@ export async function submitReimbursement(req: Request, res: Response, next: Nex
             return res.status(400).json({
                 message: "Reembolso já foi enviado",
                 statusCode: 400
+            });
+        }
+
+        if (reimbursement.solicitanteId !== req.user.id) {
+            return res.status(403).json({
+                message: "Você não tem permissão para enviar este reembolso",
+                statusCode: 403
             });
         }
 
@@ -345,14 +362,30 @@ export async function submitReimbursement(req: Request, res: Response, next: Nex
 
 export async function cancelReimbursement(req: Request, res: Response, next: NextFunction) {
     try {
-        const id = req.params.id as string;
+        const paramsResult = paramId.safeParse(req.params);
+
+        if (!paramsResult.success) {
+            return res.status(400).json({
+                message: "Dados de entrada inválidos",
+                errors: z.treeifyError(paramsResult.error),
+                statusCode: 400
+            });
+        }
+
+        const { id } = paramsResult.data;
         const userId = req.user.id;
 
         const reimbursement = await prisma.reimbursement.findUnique({ where: { id } });
 
+
         if (!reimbursement) return res.status(404).json({ message: "Não encontrado", statusCode: 404 });
 
-        if (reimbursement.solicitanteId !== userId) return res.status(403).json({ message: "Proibido", statusCode: 403 });
+        if (reimbursement.solicitanteId !== req.user.id) {
+            return res.status(403).json({
+                message: "Você não tem permissão para cancelar este reembolso",
+                statusCode: 403
+            });
+        }
 
         const statusPermitidos = ["RASCUNHO", "ENVIADO"];
         if (!statusPermitidos.includes(reimbursement.status)) {
