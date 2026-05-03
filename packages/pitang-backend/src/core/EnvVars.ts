@@ -9,7 +9,7 @@ const environmentSchema = z.object({
     HTTP_PORT: z.coerce.number().default(3131),
     JWT_SECRET: z.string().min(8, "A SECRET deve ter pelo menos 8 caracteres"),
     NODE_ENV: z.string().default("development"),
-    FRONTEND_URL: z.string(),
+    BACKEND_URL: z.string(),
 });
 
 const result = environmentSchema.safeParse(process.env);
