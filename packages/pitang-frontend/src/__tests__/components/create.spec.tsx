@@ -46,13 +46,12 @@ describe('CreateReimbursementPage', () => {
     const user = userEvent.setup();
     (fetcher.post as jest.Mock).mockResolvedValue({ data: { id: '999' } });
 
-    const { container } = render(<CreateReimbursementPage />);
+    render(<CreateReimbursementPage />);
 
     await waitFor(() => expect(fetcher).toHaveBeenCalled());
 
-    await user.type(screen.getByPlaceholderText(/Ex: Jantar com cliente/i), 'Almoço');
-    const valorInput = container.querySelector('input[type="number"]') as HTMLInputElement;
-    await user.type(valorInput, '50');
+    await user.type(screen.getByLabelText(/descrição/i), 'Almoço');
+    await user.type(screen.getByLabelText(/valor/i), '50');
 
     const categoryTrigger = screen.getByRole('combobox');
     await user.click(categoryTrigger);
@@ -79,5 +78,25 @@ describe('CreateReimbursementPage', () => {
     const discardBtn = screen.getByText(/descartar/i);
     await user.click(discardBtn);
     expect(mockNavigate).toHaveBeenCalledWith({ to: '/reimbursements' });
+  });
+
+  it('exibe erros de validação via Toast e mensagem de campo', async () => {
+    const user = userEvent.setup();
+    render(<CreateReimbursementPage />);
+
+    const submitButton = screen.getByRole('button', { name: /criar solicitação/i });
+
+    // Test empty description
+    await user.click(submitButton);
+    expect(await screen.findByText(/a descrição deve ter pelo menos 3 caracteres/i)).toBeInTheDocument();
+    expect(toast.error).toHaveBeenCalledWith(expect.stringMatching(/a descrição/i));
+
+    // Test future date
+    const dateInput = screen.getByLabelText(/data da despesa/i);
+    await user.clear(dateInput);
+    await user.type(dateInput, '2099-12-31');
+    await user.click(submitButton);
+    expect(await screen.findByText(/a data da despesa não pode ser futura/i)).toBeInTheDocument();
+    expect(toast.error).toHaveBeenCalledWith('A data da despesa não pode ser futura');
   });
 });

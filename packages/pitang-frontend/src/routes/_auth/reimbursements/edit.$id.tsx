@@ -85,7 +85,7 @@ export function EditReimbursementPage() {
       const payload = {
         ...values,
         dataDespesa: dayjs(values.dataDespesa).toISOString(),
-        categoriaId: Number(values.categoriaId)
+        categoriaId: Number(values.categoriaId),
       }
 
       await fetcher.put(`/reimbursements/${id}`, payload)
@@ -98,15 +98,28 @@ export function EditReimbursementPage() {
       toast.success("Solicitação atualizada!")
       navigate({ to: '/reimbursements' })
     } catch (error: any) {
-      toast.error(error.response?.data?.message || "Erro ao salvar alterações")
+      toast.error(error.info?.message || error.response?.data?.message || "Erro na operação")
     }
   }
 
-  if (loading) return null
+  const onError = (errors: any) => {
+    const firstError = Object.values(errors)[0] as any;
+    if (firstError?.message) {
+      toast.error(firstError.message);
+    }
+  };
+
+  if (loading) {
+    return (
+      <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/20 backdrop-blur-sm">
+        <div className="h-8 w-8 animate-spin rounded-full border-4 border-orange-600 border-t-transparent"></div>
+      </div>
+    )
+  }
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/40 backdrop-blur-md p-4 animate-in fade-in duration-300 text-left">
-      <div className="w-full max-w-xl bg-white rounded-3xl shadow-2xl border border-slate-200 overflow-hidden animate-in zoom-in-95 max-h-[90vh] flex flex-col text-left">
+      <div className="w-full max-w-xl bg-white rounded-3xl shadow-2xl border border-slate-200 overflow-hidden animate-in zoom-in-95 max-h-[95vh] flex flex-col text-left">
         <div className="p-8 overflow-y-auto custom-scrollbar text-left">
           <div className="flex items-center gap-4 mb-8 text-left">
             <Button variant="ghost" size="icon" className="rounded-full" onClick={() => navigate({ to: '/reimbursements' })}>
@@ -114,11 +127,11 @@ export function EditReimbursementPage() {
             </Button>
             <div className="text-left">
               <h1 className="text-2xl font-bold text-slate-900 tracking-tight text-left">Editar Solicitação</h1>
-              <p className="text-xs text-slate-500 font-medium text-left">Atualize os dados da sua despesa.</p>
+              <p className="text-xs text-slate-500 font-medium text-left">Altere os dados da sua despesa.</p>
             </div>
           </div>
 
-          <form onSubmit={handleSubmit(onSubmit)} className="space-y-5 text-left">
+          <form onSubmit={handleSubmit(onSubmit, onError)} className="space-y-5 text-left">
             <div className="space-y-1.5 text-left">
               <label className="text-sm font-bold text-gray-800 ml-1 text-left">Descrição</label>
               <Input
