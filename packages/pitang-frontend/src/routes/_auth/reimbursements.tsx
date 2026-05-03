@@ -17,6 +17,10 @@ import { ReimbursementCard } from '@/components/reimbursement-card'
 import { RejectionModal } from '@/components/rejection-modal'
 import { ViewReimbursementModal } from '@/components/view-modal'
 
+import { ReimbursementFilters } from '@/components/reimbursement-filters'
+import type { FilterState } from '@/components/reimbursement-filters'
+import dayjs from 'dayjs'
+
 type StatusReembolso = 'RASCUNHO' | 'ENVIADO' | 'APROVADO' | 'REJEITADO' | 'PAGO' | 'CANCELADO'
 
 export const Route = createFileRoute('/_auth/reimbursements')({
@@ -32,6 +36,11 @@ function ReimbursementsKanban() {
     const [isViewModalOpen, setIsViewModalOpen] = useState(false)
     const [selectedData, setSelectedData] = useState<any>(null)
     const [selectedId, setSelectedId] = useState<string | null>(null)
+    const [activeFilters, setActiveFilters] = useState<FilterState>({
+        search: '',
+        categoryId: 'all',
+        date: ''
+    })
 
     const loadData = async () => {
         try {
@@ -90,11 +99,34 @@ function ReimbursementsKanban() {
     }
 
     const filteredData = useMemo(() => {
+        let result = [...reimbursements]
+
+        // 1. Role-based base filter
         if (user?.perfil === 'FINANCEIRO') {
-            return reimbursements.filter(r => ['APROVADO', 'PAGO', 'REJEITADO', 'CANCELADO'].includes(r.status))
+            result = result.filter(r => ['APROVADO', 'PAGO', 'REJEITADO', 'CANCELADO'].includes(r.status))
         }
-        return reimbursements
-    }, [reimbursements, user])
+
+        // 2. Search filter
+        if (activeFilters.search) {
+            const term = activeFilters.search.toLowerCase()
+            result = result.filter(r =>
+                r.descricao.toLowerCase().includes(term) ||
+                r.solicitante?.nome?.toLowerCase().includes(term)
+            )
+        }
+
+        // 3. Category filter
+        if (activeFilters.categoryId !== 'all') {
+            result = result.filter(r => String(r.categoriaId) === activeFilters.categoryId)
+        }
+
+        // 4. Date filter
+        if (activeFilters.date) {
+            result = result.filter(r => dayjs(r.dataDespesa).isSame(dayjs(activeFilters.date), 'day'))
+        }
+
+        return result
+    }, [reimbursements, user, activeFilters])
 
     const columns: { title: string; status: StatusReembolso[]; icon: any }[] = [
         { title: "Rascunhos", status: ['RASCUNHO'], icon: ClipboardList },
@@ -103,7 +135,7 @@ function ReimbursementsKanban() {
         { title: "Finalizados", status: ['PAGO', 'REJEITADO', 'CANCELADO'], icon: History },
     ]
 
-    if (loading) return <div className="flex h-96 items-center justify-center font-bold text-slate-900">Carregando...</div>
+    if (loading) return <div className="flex h-96 items-center justify-center font-bold text-slate-900 uppercase tracking-tighter animate-pulse">Carregando painel...</div>
 
     return (
         <div className="flex flex-col h-full w-full overflow-hidden text-left">
@@ -113,17 +145,20 @@ function ReimbursementsKanban() {
                     <p className="text-sm text-slate-500 font-bold uppercase tracking-tighter">Visualização e gestão de solicitações</p>
                 </div>
                 {user?.perfil === 'COLABORADOR' && (
-                    <Button onClick={() => navigate({ to: '/reimbursements/create' })} className="bg-gray-600 hover:bg-orange-600 rounded-xl font-bold">
+                    <Button onClick={() => navigate({ to: '/reimbursements/create' })} className="bg-orange-600 hover:bg-orange-700 h-12 px-6 rounded-2xl font-bold transition-all shadow-lg shadow-orange-200">
                         <Plus className="h-4 w-4 mr-2" /> Nova Solicitação
                     </Button>
                 )}
+            </div>
+
+            <div className="px-6 shrink-0">
+                <ReimbursementFilters onFilterChange={setActiveFilters} />
             </div>
 
             <div className="flex-1 px-6 pb-6 overflow-hidden">
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 h-full text-left">
                     {columns.map((column) => {
                         const cards = filteredData.filter(r => column.status.includes(r.status))
-                        const isFinalizedColumn = column.title === "Finalizados";
 
                         if (user?.perfil === 'FINANCEIRO' && column.title !== "Aprovados" && column.title !== "Finalizados") {
                             return null
@@ -147,13 +182,6 @@ function ReimbursementsKanban() {
                                                 className="relative group cursor-pointer transition-all active:scale-[0.98] text-left"
                                                 onClick={(e) => handleView(item, e)}
                                             >
-                                                {hasAttachments && !isFinalizedColumn && (
-                                                    <div className="absolute top-3 right-3 z-10 flex items-center gap-1 bg-white/80 px-2 py-1 rounded-full backdrop-blur-sm border border-slate-200">
-                                                        <FileIcon className="h-3 w-3 text-orange-600" />
-                                                        <span className="text-[9px] font-bold text-slate-600 uppercase tracking-tighter">Anexo</span>
-                                                    </div>
-                                                )}
-
                                                 <div className="relative">
                                                     <ReimbursementCard
                                                         item={item}
@@ -166,8 +194,8 @@ function ReimbursementsKanban() {
                                                         }}
                                                     />
 
-                                                    {hasAttachments && isFinalizedColumn && (
-                                                        <div className="absolute bottom-4 left-4 flex items-center gap-1.5">
+                                                    {hasAttachments && (
+                                                        <div className="absolute bottom-4 left-4 flex items-center gap-1.5 pointer-events-none">
                                                             <FileIcon className="h-3 w-3 text-amber-600" />
                                                             <span className="text-[9px] font-bold text-amber-600 uppercase tracking-tight">Possui Anexo</span>
                                                         </div>

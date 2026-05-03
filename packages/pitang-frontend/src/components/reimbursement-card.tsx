@@ -1,4 +1,4 @@
-import { Edit3, CheckCircle, XCircle, Banknote, Send, Trash2, Info, FileText } from 'lucide-react'
+import { Edit3, CheckCircle, XCircle, Banknote, Send, Trash2, Info } from 'lucide-react'
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { toast } from 'sonner'
@@ -12,8 +12,6 @@ interface ReimbursementCardProps {
 }
 
 export function ReimbursementCard({ item, user, onAction, onOpenReject, onEdit }: ReimbursementCardProps) {
-
-    const hasAttachments = (item.attachments && item.attachments.length > 0) || (item.anexos && item.anexos.length > 0);
 
     const getStatusBadge = (status: string) => {
         switch (status) {
@@ -37,12 +35,6 @@ export function ReimbursementCard({ item, user, onAction, onOpenReject, onEdit }
                 </span>
 
                 <div className="flex items-center gap-2 shrink-0">
-                    {hasAttachments && (
-                        <div className="flex items-center gap-1 bg-slate-50 px-2 py-1 rounded-full border border-slate-100">
-                            <FileText className="h-3 w-3 text-slate-400" />
-                            <span className="text-[9px] font-bold text-slate-500 uppercase tracking-tighter">Anexo</span>
-                        </div>
-                    )}
                     {['PAGO', 'REJEITADO', 'CANCELADO'].includes(item.status) && getStatusBadge(item.status)}
                 </div>
             </div>
