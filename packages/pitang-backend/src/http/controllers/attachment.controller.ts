@@ -20,7 +20,7 @@ export async function postAttachmentSimulated(req: Request, res: Response, next:
 
         if (!result.success) {
             return res.status(400).json({
-                message: "Dados de entrada inválidos",
+                message: result.error.message,
                 errors: z.treeifyError(result.error),
                 statusCode: 400
             });

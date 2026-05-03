@@ -63,11 +63,12 @@ export async function postReimbursement(req: Request, res: Response, next: NextF
 
         if (!result.success) {
             return res.status(400).json({
-                message: "Dados de entrada inválidos",
+                message: result.error.message,
                 errors: z.treeifyError(result.error),
                 statusCode: 400
             });
         }
+
 
         const { descricao, valor, dataDespesa, categoriaId } = result.data;
         const solicitanteId = req.user.id;
@@ -198,7 +199,7 @@ export async function putReimbursementById(req: Request, res: Response, next: Ne
 
         if (!bodyResult.success) {
             return res.status(400).json({
-                message: "Dados de entrada inválidos",
+                message: bodyResult.error.message,
                 errors: z.treeifyError(bodyResult.error),
                 statusCode: 400
             });
