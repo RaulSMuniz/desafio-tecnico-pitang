@@ -10,8 +10,7 @@ import {
     ClipboardList,
     Clock,
     CheckCircle,
-    History,
-    FileIcon
+    History
 } from 'lucide-react'
 import { ReimbursementCard } from '@/components/reimbursement-card'
 import { RejectionModal } from '@/components/rejection-modal'
@@ -101,12 +100,10 @@ function ReimbursementsKanban() {
     const filteredData = useMemo(() => {
         let result = [...reimbursements]
 
-        // 1. Role-based base filter
         if (user?.perfil === 'FINANCEIRO') {
             result = result.filter(r => ['APROVADO', 'PAGO', 'REJEITADO', 'CANCELADO'].includes(r.status))
         }
 
-        // 2. Search filter
         if (activeFilters.search) {
             const term = activeFilters.search.toLowerCase()
             result = result.filter(r =>
@@ -115,12 +112,10 @@ function ReimbursementsKanban() {
             )
         }
 
-        // 3. Category filter
         if (activeFilters.categoryId !== 'all') {
             result = result.filter(r => String(r.categoriaId) === activeFilters.categoryId)
         }
 
-        // 4. Date filter
         if (activeFilters.date) {
             result = result.filter(r => dayjs(r.dataDespesa).isSame(dayjs(activeFilters.date), 'day'))
         }
@@ -174,33 +169,22 @@ function ReimbursementsKanban() {
 
                                 <div className="flex-1 overflow-y-auto space-y-4 pr-1 scrollbar-thin text-left">
                                     {cards.map(item => {
-                                        const hasAttachments = (item.attachments && item.attachments.length > 0) || (item.anexos && item.anexos.length > 0);
-
                                         return (
                                             <div
                                                 key={item.id}
                                                 className="relative group cursor-pointer transition-all active:scale-[0.98] text-left"
                                                 onClick={(e) => handleView(item, e)}
                                             >
-                                                <div className="relative">
-                                                    <ReimbursementCard
-                                                        item={item}
-                                                        user={user}
-                                                        onAction={(id, action) => handleAction(id, action)}
-                                                        onEdit={(id) => handleEdit(id)}
-                                                        onOpenReject={(id) => {
-                                                            setSelectedId(id);
-                                                            setIsRejectModalOpen(true);
-                                                        }}
-                                                    />
-
-                                                    {hasAttachments && (
-                                                        <div className="absolute bottom-4 left-4 flex items-center gap-1.5 pointer-events-none">
-                                                            <FileIcon className="h-3 w-3 text-amber-600" />
-                                                            <span className="text-[9px] font-bold text-amber-600 uppercase tracking-tight">Possui Anexo</span>
-                                                        </div>
-                                                    )}
-                                                </div>
+                                                <ReimbursementCard
+                                                    item={item}
+                                                    user={user}
+                                                    onAction={(id, action) => handleAction(id, action)}
+                                                    onEdit={(id) => handleEdit(id)}
+                                                    onOpenReject={(id) => {
+                                                        setSelectedId(id);
+                                                        setIsRejectModalOpen(true);
+                                                    }}
+                                                />
                                             </div>
                                         );
                                     })}

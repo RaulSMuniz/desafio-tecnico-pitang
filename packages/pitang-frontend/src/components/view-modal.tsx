@@ -109,11 +109,20 @@ export function ViewReimbursementModal({ isOpen, onClose, data }: ViewModalProps
                                         </div>
                                     </div>
                                 </div>
-                                <div className="flex items-start gap-3 text-left">
-                                    <Tag className="h-5 w-5 text-slate-400 mt-0.5" />
-                                    <div className="text-left">
-                                        <p className="text-[10px] font-bold uppercase text-slate-400 tracking-widest text-left">Categoria</p>
-                                        <p className="text-slate-700 font-medium text-left">{data.categoria?.nome || data.category?.nome || 'Não informada'}</p>
+                                <div className="grid grid-cols-2 gap-4 text-left">
+                                    <div className="flex items-start gap-3 text-left">
+                                        <Tag className="h-5 w-5 text-slate-400 mt-0.5" />
+                                        <div className="text-left">
+                                            <p className="text-[10px] font-bold uppercase text-slate-400 tracking-widest text-left">Categoria</p>
+                                            <p className="text-slate-700 font-medium text-left">{data.categoria?.nome || data.category?.nome || 'Não informada'}</p>
+                                        </div>
+                                    </div>
+                                    <div className="flex items-start gap-3 text-left">
+                                        <User className="h-5 w-5 text-slate-400 mt-0.5" />
+                                        <div className="text-left">
+                                            <p className="text-[10px] font-bold uppercase text-slate-400 tracking-widest text-left">Solicitante</p>
+                                            <p className="text-slate-700 font-medium text-left">{data.solicitante?.nome || 'Não informado'}</p>
+                                        </div>
                                     </div>
                                 </div>
                             </div>
