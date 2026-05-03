@@ -1,14 +1,15 @@
 import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
+import { Input } from "@/components/ui/input"
+import { useState } from "react";
+import { toast } from "sonner";
+import { loginSchema } from "@/zodSchemas";
+import pitangLogo from '@/assets/pitang-logo.png'
 import {
   Field,
   FieldGroup,
   FieldLabel,
 } from "@/components/ui/field"
-import { Input } from "@/components/ui/input"
-import { useState } from "react";
-import { toast } from "sonner";
-import { loginSchema } from "@/zodSchemas";
 
 export type LoginData = {
   email: string,
@@ -49,48 +50,53 @@ export function LoginForm({
   }
 
   return (
-    <form
-      className={cn("flex flex-col gap-6 w-full", className)}
-      {...props}
-      onSubmit={handleSubmit}
-      noValidate
-    >
-      <FieldGroup className="flex flex-col gap-4">
-        <div className="flex flex-col items-center gap-2 text-center mb-4">
-          <h1 className="text-2xl font-bold tracking-tight">Faça login na sua conta</h1>
-          <p className="text-sm text-muted-foreground">
-            Insira seu e-mail e senha abaixo para acessar o sistema
-          </p>
-        </div>
+    <div className="w-full max-w-md bg-white p-8 md:p-12 rounded-[2.5rem] shadow-2xl border border-slate-100 animate-in fade-in zoom-in duration-500 text-left">
+      <div className="flex flex-col items-center mb-10 text-center">
+        <img src={pitangLogo} alt="Pitang" className="h-16 w-auto mb-4" />
+        <div className="h-1 w-12 bg-[#FFD700] mt-2 rounded-full"></div>
+        <p className="text-slate-500 font-bold uppercase text-[10px] tracking-[0.3em] mt-4">Plataforma de Reembolsos</p>
+      </div>
 
-        <Field className="space-y-1">
-          <FieldLabel htmlFor="email">Email</FieldLabel>
-          <Input
-            className="w-full"
-            onChange={(e) => setEmail(e.target.value)}
-            value={email}
-            id="email"
-            type="email"
-            placeholder="exemplo@email.com"
-          />
-        </Field>
+      <form
+        className={cn("flex flex-col gap-6 w-full text-left", className)}
+        {...props}
+        onSubmit={handleSubmit}
+        noValidate
+      >
+        <FieldGroup className="flex flex-col gap-5">
+          <Field className="space-y-2">
+            <FieldLabel htmlFor="email" className="text-xs font-black uppercase tracking-widest text-slate-400 ml-1">Email</FieldLabel>
+            <Input
+              id="email"
+              type="email"
+              placeholder="seu@email.com"
+              onChange={(e) => setEmail(e.target.value)}
+              value={email}
+              className="h-14 rounded-2xl border-slate-200 focus-visible:ring-[#800000]/20 focus-visible:border-[#800000] transition-all bg-slate-50/50"
+            />
+          </Field>
 
-        <Field className="space-y-1">
-          <FieldLabel htmlFor="senha">Senha</FieldLabel>
-          <Input
-            className="w-full"
-            onChange={(e) => setSenha(e.target.value)}
-            value={senha}
-            id="senha"
-            type="password"
-            placeholder='********'
-          />
-        </Field>
+          <Field className="space-y-2">
+            <FieldLabel htmlFor="senha" className="text-xs font-black uppercase tracking-widest text-slate-400 ml-1">Senha</FieldLabel>
+            <Input
+              id="senha"
+              type="password"
+              placeholder="********"
+              onChange={(e) => setSenha(e.target.value)}
+              value={senha}
+              className="h-14 rounded-2xl border-slate-200 focus-visible:ring-[#800000]/20 focus-visible:border-[#800000] transition-all bg-slate-50/50"
+            />
+          </Field>
 
-        <Button type="submit" className="w-full mt-2" disabled={isSubmitting}>
-          {isSubmitting ? "Autenticando..." : "Entrar"}
-        </Button>
-      </FieldGroup>
-    </form>
+          <Button 
+            type="submit" 
+            className="w-full h-14 bg-[#800000] hover:bg-[#600000] text-white rounded-2xl font-black text-lg shadow-lg shadow-red-100 transition-all active:scale-[0.98] mt-2" 
+            disabled={isSubmitting}
+          >
+            {isSubmitting ? "Autenticando..." : "ENTRAR NO SISTEMA"}
+          </Button>
+        </FieldGroup>
+      </form>
+    </div>
   )
 }
