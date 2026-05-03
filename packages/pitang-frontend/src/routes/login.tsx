@@ -1,4 +1,6 @@
 import { createFileRoute, redirect, useNavigate } from '@tanstack/react-router'
+import { PageTitle } from '@/components/page-title'
+import { useEffect } from 'react'
 import { LoginForm, type LoginData } from "@/components/login-form"
 import { useAuth } from '@/hooks/use-auth'
 import { toast } from 'sonner'
@@ -15,6 +17,14 @@ export const Route = createFileRoute('/login')({
 function LoginComponent() {
   const { signIn } = useAuth()
   const navigate = useNavigate()
+
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search)
+    if (params.get('reason') === 'expired') {
+      toast.warning("Sua sessão expirou. Faça login novamente para continuar.")
+      window.history.replaceState({}, document.title, window.location.pathname)
+    }
+  }, [])
 
   const handleSignIn = async (data: LoginData) => {
     try {
@@ -34,6 +44,7 @@ function LoginComponent() {
 
   return (
     <div className="min-h-screen bg-[#800000] flex flex-col items-center justify-center p-4 relative overflow-hidden">
+      <PageTitle title="Login" />
       <div className="absolute inset-0 opacity-10 pointer-events-none" style={{
         backgroundImage: `url("data:image/svg+xml,%3Csvg width='100' height='100' viewBox='0 0 100 100' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M10 10L90 90M90 10L10 90' stroke='white' stroke-width='0.5' fill='none'/%3E%3Ccircle cx='10' cy='10' r='2' fill='white'/%3E%3Ccircle cx='90' cy='90' r='2' fill='white'/%3E%3C/svg%3E")`,
         backgroundSize: '200px 200px'
