@@ -30,6 +30,12 @@ export async function approveReimbursement(req: Request, res: Response, next: Ne
             });
         }
 
+        if (reimbursement.solicitanteId === userId) {
+            return res.status(403).json({
+                message: "Segregação de funções: Você não pode analisar sua própria solicitação."
+            });
+        }
+
         const updated = await prisma.reimbursement.update({
             where: { id },
             data: {
@@ -56,7 +62,17 @@ export async function approveReimbursement(req: Request, res: Response, next: Ne
 
 export async function rejectReimbursement(req: Request, res: Response, next: NextFunction) {
     try {
-        const id = req.params.id as string;
+        const paramsResult = paramId.safeParse(req.params);
+
+        if (!paramsResult.success) {
+            return res.status(400).json({
+                message: "Dados de entrada inválidos",
+                errors: z.treeifyError(paramsResult.error),
+                statusCode: 400
+            });
+        }
+
+        const { id } = paramsResult.data;
         const result = rejectionSchema.safeParse(req.body);
         const userId = req.user.id;
 
@@ -80,6 +96,12 @@ export async function rejectReimbursement(req: Request, res: Response, next: Nex
 
         if (!reimbursement || reimbursement.status !== "ENVIADO") {
             return res.status(400).json({ message: "Solicitação inválida para rejeição." });
+        }
+
+        if (reimbursement.solicitanteId === userId) {
+            return res.status(403).json({
+                message: "Segregação de funções: Você não pode analisar sua própria solicitação."
+            });
         }
 
         const updated = await prisma.reimbursement.update({
@@ -109,7 +131,17 @@ export async function rejectReimbursement(req: Request, res: Response, next: Nex
 
 export async function payReimbursement(req: Request, res: Response, next: NextFunction) {
     try {
-        const id = req.params.id as string;
+        const paramsResult = paramId.safeParse(req.params);
+
+        if (!paramsResult.success) {
+            return res.status(400).json({
+                message: "Dados de entrada inválidos",
+                errors: z.treeifyError(paramsResult.error),
+                statusCode: 400
+            });
+        }
+
+        const { id } = paramsResult.data;
         const userId = req.user.id;
 
         const reimbursement = await prisma.reimbursement.findUnique({ where: { id } });
