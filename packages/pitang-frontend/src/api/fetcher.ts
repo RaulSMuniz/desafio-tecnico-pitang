@@ -32,6 +32,12 @@ const fetcher = async <T = any>(
     });
 
     if (!response.ok) {
+        if (response.status === 401 && !resource.toString().includes('/auth/login')) {
+            document.cookie = "@pitang/accessToken=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT";
+            localStorage.removeItem('@pitang/user');
+            window.location.href = '/login?reason=expired';
+        }
+
         const error = new FetcherError(
             'An error occurred while fetching the data.',
         );
