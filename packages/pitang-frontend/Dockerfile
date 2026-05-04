@@ -23,6 +23,9 @@ RUN npm run build
 # Estágio de Produção (Servindo com Nginx)
 FROM nginx:stable-alpine as production-stage
 
+# Copiar a configuração customizada do Nginx
+COPY packages/pitang-frontend/nginx.conf /etc/nginx/conf.d/default.conf
+
 # Copiar os arquivos buildados do estágio anterior
 COPY --from=build-stage /app/packages/pitang-frontend/dist /usr/share/nginx/html
 
