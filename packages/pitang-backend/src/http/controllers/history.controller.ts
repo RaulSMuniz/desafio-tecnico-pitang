@@ -109,12 +109,14 @@ export async function getHistory(req: Request, res: Response, next: NextFunction
         const history = await prisma.history.findMany({
             where,
             take: Number(pageSize),
-            orderBy: { criadoEm: 'desc' },
+            orderBy: {
+                criadoEm: 'desc'
+            },
             select: {
                 id: true,
                 solicitacaoId: true,
-                observacao: true,
                 acao: true,
+                observacao: true,
                 criadoEm: true,
                 usuario: {
                     select: {
@@ -141,10 +143,15 @@ export async function getHistory(req: Request, res: Response, next: NextFunction
             });
         }
 
+        const formatted = history.map(h => ({
+            ...h,
+            criadoEm: dayjs(h.criadoEm).format('DD/MM/YYYY HH:mm:ss')
+        }));
+
         return res.status(200).json({
             message: "Histórico encontrado",
             statusCode: 200,
-            data: history,
+            data: formatted,
         });
     } catch (error) {
         next(error);
