@@ -84,7 +84,8 @@ function CategoriesManagement() {
       setIsModalOpen(false)
       loadCategories()
     } catch (error: any) {
-      toast.error(error.response?.data?.message || "Erro ao salvar categoria")
+      if (error.status === 409) toast.error("Esse nome de categoria já existe.")
+      else toast.error("Erro ao salvar categoria")
     }
   }
 

@@ -82,7 +82,7 @@ export function CreateReimbursementPage() {
       toast.success("Solicitação criada com sucesso!")
       navigate({ to: '/reimbursements' })
     } catch (error: any) {
-      toast.error(error.info?.message || error.response?.data?.message || "Erro na operação")
+      toast.error(error.info?.message || "Erro na operação")
     }
   }
 

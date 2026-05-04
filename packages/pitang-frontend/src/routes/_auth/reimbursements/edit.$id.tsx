@@ -107,7 +107,7 @@ export function EditReimbursementPage() {
       toast.success("Solicitação atualizada!")
       navigate({ to: '/reimbursements' })
     } catch (error: any) {
-      toast.error(error.info?.message || error.response?.data?.message || "Erro na operação")
+      toast.error(error.info?.message || "Erro na operação")
     }
   }
 

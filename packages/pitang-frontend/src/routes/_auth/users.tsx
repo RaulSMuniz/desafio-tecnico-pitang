@@ -93,7 +93,7 @@ function UsersManagement() {
       setIsModalOpen(false)
       loadUsers()
     } catch (error: any) {
-      if (error.response?.status === 409) toast.error("Este e-mail já está em uso.")
+      if (error.status === 409) toast.error("Este e-mail já está cadastrado.")
       else toast.error("Erro ao processar solicitação")
     } finally {
       setIsSubmitting(false)
