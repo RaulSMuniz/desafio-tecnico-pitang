@@ -68,4 +68,7 @@ export const paginationQuery = z.object({
     sort: z.enum(['asc', 'desc']).default('asc'),
     sortBy: z.enum(['date', 'value', 'atualizadoEm']).default('date'),
     status: z.string().optional().default("all"),
+    search: z.string().optional().default(""),
+    categoryId: z.string().optional().default("all"),
+    date: z.string().optional().default(""),
 });
