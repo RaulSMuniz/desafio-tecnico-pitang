@@ -14,16 +14,23 @@ export const Route = createFileRoute('/_auth/dashboard')({
 function DashboardPage() {
   const { user } = useAuth();
   const [reimbursements, setReimbursements] = useState<any[]>([]);
+  const [stats, setStats] = useState<any>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     const loadData = async () => {
       try {
         setLoading(true);
-        const response = await fetcher.get<any>('/reimbursements');
-        const data = response.data?.data || response.data || response;
+        const [statsRes, listRes] = await Promise.all([
+          fetcher.get<any>('/reimbursements/stats'),
+          fetcher.get<any>('/reimbursements?pageSize=5&sort=desc')
+        ]);
 
-        setReimbursements(Array.isArray(data) ? data : []);
+        const statsData = statsRes.data?.data || statsRes.data;
+        const listData = listRes.data?.data || listRes.data;
+
+        setStats(statsData);
+        setReimbursements(Array.isArray(listData) ? listData : []);
       } catch (error) {
         console.error("Erro ao carregar dados do dashboard", error);
       } finally {
@@ -37,23 +44,13 @@ function DashboardPage() {
   const isFinanceiro = user?.perfil === 'FINANCEIRO';
   const isColaborador = user?.perfil === 'COLABORADOR';
 
-  const stats = useMemo(() => {
-    const pendingGestor = reimbursements.filter(r => r.status === 'ENVIADO').length;
-    const approvedNotPaid = reimbursements.filter(r => r.status === 'APROVADO').length;
-    const rejected = reimbursements.filter(r => r.status === 'REJEITADO').length;
-    const totalPaidValue = reimbursements
-      .filter(r => r.status === 'PAGO')
-      .reduce((sum, r) => sum + (Number(r.valor) || 0), 0);
-    const totalCount = reimbursements.length;
-
-    return {
-      pendingGestor,
-      approvedNotPaid,
-      rejected,
-      totalPaidValue,
-      totalCount
-    };
-  }, [reimbursements]);
+  const displayStats = stats || {
+    pendingGestor: 0,
+    approvedNotPaid: 0,
+    rejected: 0,
+    totalPaidValue: 0,
+    totalCount: 0
+  };
 
   const getStatusBadge = (status: string) => {
     const configs: any = {
@@ -68,26 +65,17 @@ function DashboardPage() {
   };
 
   const activities = useMemo(() => {
-    const sorted = [...reimbursements].sort((a, b) => {
-      const dateA = dayjs(a.atualizadoEm || a.criadoEm).valueOf();
-      const dateB = dayjs(b.atualizadoEm || b.criadoEm).valueOf();
-      return dateB - dateA;
-    });
+    // Como o backend já envia ordenado e limitado, apenas aplicamos filtros de perfil se necessário
+    let result = [...reimbursements];
 
     if (isFinanceiro) {
-      return sorted.filter(r => ['PAGO', 'REJEITADO'].includes(r.status));
+      result = result.filter(r => ['PAGO', 'REJEITADO'].includes(r.status));
+    } else if (isGestor) {
+      result = result.filter(r => ['APROVADO', 'REJEITADO'].includes(r.status));
     }
 
-    if (isGestor) {
-      return sorted.filter(r => ['APROVADO', 'REJEITADO'].includes(r.status));
-    }
-
-    if (isColaborador || user?.perfil === 'ADMIN') {
-      return sorted;
-    }
-
-    return [];
-  }, [reimbursements, isFinanceiro, isGestor, isColaborador, user]);
+    return result;
+  }, [reimbursements, isFinanceiro, isGestor]);
 
   const formatActivityDate = (date: string) => {
     const d = dayjs(date);
@@ -143,27 +131,27 @@ function DashboardPage() {
           <>
             <StatsCard
               label="Aguardando Minha Análise"
-              value={stats.pendingGestor}
+              value={displayStats.pendingGestor}
               icon={Clock}
               variant="warning"
               description="Pendentes de aprovação"
             />
             <StatsCard
               label="Aprovados não pagos"
-              value={stats.approvedNotPaid}
+              value={displayStats.approvedNotPaid}
               icon={BadgeDollarSign}
               description="Aguardando financeiro"
             />
             <StatsCard
               label="Rejeitados"
-              value={stats.rejected}
+              value={displayStats.rejected}
               icon={LayoutDashboard}
               variant="danger"
               description="Total de negativas"
             />
             <StatsCard
               label="Total Pago"
-              value={new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(stats.totalPaidValue)}
+              value={new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(displayStats.totalPaidValue)}
               icon={BadgeDollarSign}
               variant="success"
               description="Volume liquidado"
@@ -175,14 +163,14 @@ function DashboardPage() {
           <>
             <StatsCard
               label="Aguardando Pagamento"
-              value={stats.approvedNotPaid}
+              value={displayStats.approvedNotPaid}
               icon={Clock}
               variant="warning"
               description="Aprovados pelo gestor"
             />
             <StatsCard
               label="Total Pago"
-              value={new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(stats.totalPaidValue)}
+              value={new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(displayStats.totalPaidValue)}
               icon={BadgeDollarSign}
               variant="success"
               description="Volume liquidado"
@@ -194,27 +182,27 @@ function DashboardPage() {
           <>
             <StatsCard
               label="Total de Pedidos"
-              value={stats.totalCount}
+              value={displayStats.totalCount}
               icon={LayoutDashboard}
               description="Seu histórico total"
             />
             <StatsCard
               label="Aguardando Análise"
-              value={stats.pendingGestor}
+              value={displayStats.pendingGestor}
               icon={Clock}
               variant="warning"
               description="Em fila de espera"
             />
             <StatsCard
               label="Pedidos Rejeitados"
-              value={stats.rejected}
+              value={displayStats.rejected}
               icon={LayoutDashboard}
               variant="danger"
               description="Necessitam atenção"
             />
             <StatsCard
               label="Total Reembolsado"
-              value={new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(stats.totalPaidValue)}
+              value={new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(displayStats.totalPaidValue)}
               icon={BadgeDollarSign}
               variant="success"
               description="Crédito em conta"
