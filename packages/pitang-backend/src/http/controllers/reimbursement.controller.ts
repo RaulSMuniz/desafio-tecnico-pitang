@@ -57,6 +57,8 @@ export async function getReimbursements(req: Request, res: Response, next: NextF
         switch (pagination.sortBy) {
             case 'value': sortField = 'valor'; break;
             case 'atualizadoEm': sortField = 'atualizadoEm'; break;
+            case 'createdAt': sortField = 'criadoEm'; break;
+            case 'date': sortField = 'dataDespesa'; break;
             default: sortField = 'dataDespesa';
         }
 
@@ -66,7 +68,10 @@ export async function getReimbursements(req: Request, res: Response, next: NextF
                 where,
                 skip: (pagination.page - 1) * pagination.pageSize,
                 take: pagination.pageSize,
-                orderBy: { [sortField]: pagination.sort },
+                orderBy: [
+                    { [sortField]: pagination.sort },
+                    { criadoEm: 'desc' } // Tie-breaker para mostrar os mais recentes primeiro
+                ],
                 include: {
                     categoria: true,
                     solicitante: {

@@ -40,7 +40,7 @@ function ReimbursementsKanban() {
         date: '',
         status: 'all',
         sortBy: 'date',
-        sort: 'asc'
+        sort: 'desc'
     })
 
     // Resetar para página 1 ao filtrar

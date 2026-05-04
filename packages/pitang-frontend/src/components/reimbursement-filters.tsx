@@ -13,7 +13,7 @@ export interface FilterState {
   categoryId: string;
   date: string;
   status: string;
-  sortBy: 'date' | 'value';
+  sortBy: 'date' | 'value' | 'createdAt';
   sort: 'asc' | 'desc';
 }
 
@@ -25,7 +25,7 @@ export function ReimbursementFilters({ onFilterChange }: FiltersProps) {
     date: '',
     status: 'all',
     sortBy: 'date',
-    sort: 'asc'
+    sort: 'desc'
   })
 
   useEffect(() => {
@@ -54,7 +54,7 @@ export function ReimbursementFilters({ onFilterChange }: FiltersProps) {
       date: '',
       status: 'all',
       sortBy: 'date',
-      sort: 'asc'
+      sort: 'desc'
     }
     setFilters(initial)
     onFilterChange(initial)
@@ -111,7 +111,8 @@ export function ReimbursementFilters({ onFilterChange }: FiltersProps) {
           onChange={(e) => handleChange('sortBy', e.target.value)}
           className="pl-4 pr-2 h-10 bg-transparent border-none outline-none text-xs font-bold uppercase tracking-tight cursor-pointer"
         >
-          <option value="date">Data</option>
+          <option value="date">Data da Despesa</option>
+          <option value="createdAt">Recém Criados</option>
           <option value="value">Valor</option>
         </select>
         <div className="h-4 w-[1px] bg-slate-200" />
