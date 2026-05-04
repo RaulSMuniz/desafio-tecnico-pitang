@@ -19,7 +19,7 @@ export async function getReimbursements(req: Request, res: Response, next: NextF
             ? { solicitanteId: req.user.id }
             : {};
 
-        const { search, categoryId, date, status } = req.query;
+        const { search, categoryId, date, status } = pagination;
 
         if (status && status !== 'all') {
             const statusArray = String(status).split(',');
@@ -32,8 +32,8 @@ export async function getReimbursements(req: Request, res: Response, next: NextF
 
         if (search) {
             where.OR = [
-                { descricao: { contains: String(search), mode: 'insensitive' } },
-                { solicitante: { nome: { contains: String(search), mode: 'insensitive' } } }
+                { descricao: { contains: search, mode: 'insensitive' } },
+                { solicitante: { nome: { contains: search, mode: 'insensitive' } } }
             ];
         }
 
@@ -42,7 +42,7 @@ export async function getReimbursements(req: Request, res: Response, next: NextF
         }
 
         if (date) {
-            const start = new Date(String(date));
+            const start = new Date(date);
             const end = new Date(start);
             end.setDate(end.getDate() + 1);
 

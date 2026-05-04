@@ -1,6 +1,6 @@
 import type { Request, Response, NextFunction } from "express";
 import { prisma } from "../../core/PrismaClient.js";
-import { paramId } from "../../schemas/index.js";
+import { paginationQuery, paramId } from "../../schemas/index.js";
 import z from "zod";
 import dayjs from "dayjs";
 
@@ -77,12 +77,34 @@ export async function getHistory(req: Request, res: Response, next: NextFunction
     try {
         const { id: usuarioId, perfil } = req.user;
 
-        const where = perfil === "COLABORADOR"
+        const result = paginationQuery.safeParse(req.query);
+
+        if (!result.success) {
+            return res.status(400).json({
+                message: "Dados de paginação inválidos",
+                errors: z.treeifyError(result.error),
+                statusCode: 400
+            });
+        }
+
+        const { pageSize, status } = result.data;
+
+        const where: any = perfil === "COLABORADOR"
             ? { solicitacao: { solicitanteId: usuarioId } }
             : {};
 
+        if (status && status !== 'all') {
+            const statusArray = String(status).split(',');
+            where.solicitacao = {
+                ...where.solicitacao,
+                status: statusArray.length > 1 ? { in: statusArray } : status
+            };
+        }
+
         const history = await prisma.history.findMany({
             where,
+            take: Number(pageSize),
+            orderBy: { criadoEm: 'desc' },
             select: {
                 id: true,
                 solicitacaoId: true,
@@ -95,25 +117,29 @@ export async function getHistory(req: Request, res: Response, next: NextFunction
                         perfil: true,
                     },
                 },
+                solicitacao: {
+                    include: {
+                        categoria: true,
+                        solicitante: {
+                            select: { nome: true }
+                        }
+                    }
+                }
             }
         });
 
-        if (!history) {
-            return res.status(204).json({
+        if (!history || history.length === 0) {
+            return res.status(200).json({
                 message: "Nenhum histórico encontrado",
-                statusCode: 204,
+                statusCode: 200,
+                data: []
             });
         }
-
-        const historyFormatted = history.map(item => ({
-            ...item,
-            criadoEm: dayjs(item.criadoEm).format('DD/MM/YYYY HH:mm:ss')
-        }));
 
         return res.status(200).json({
             message: "Histórico encontrado",
             statusCode: 200,
-            data: historyFormatted,
+            data: history,
         });
     } catch (error) {
         next(error);
