@@ -1,0 +1,48 @@
+version: '3.8'
+
+services:
+  db:
+    image: postgres:16
+    container_name: pitang-db
+    restart: always
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: password
+      POSTGRES_DB: pitangdb
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+
+  backend:
+    build:
+      context: .
+      dockerfile: packages/pitang-backend/Dockerfile
+    container_name: pitang-backend
+    restart: always
+    depends_on:
+      - db
+    environment:
+      - DATABASE_URL=postgresql://postgres:password@db:5432/pitangdb?schema=public
+      - JWT_SECRET=12345678
+      - BACKEND_URL=0.0.0.0:3333
+    ports:
+      - "3333:3333"
+    # Adicionando um comando de espera para o banco estar pronto
+    command: sh -c "npx prisma migrate dev && npm run dev"
+
+  frontend:
+    build:
+      context: .
+      dockerfile: packages/pitang-frontend/Dockerfile
+      args:
+        - VITE_API_BASE_URL=http://localhost:3333
+    container_name: pitang-frontend
+    restart: always
+    depends_on:
+      - backend
+    ports:
+      - "80:80"
+
+volumes:
+  postgres_data:
