@@ -58,8 +58,14 @@ export const historySchema = z.object({
     usuarioId: z.uuid("ID de usuário inválido"),
 })
 
+export const userSearchSchema = z.object({
+    search: z.string().optional().default(""),
+})
+
 export const paginationQuery = z.object({
     page: z.coerce.number().default(1),
     pageSize: z.coerce.number().max(100).default(20),
     sort: z.enum(['asc', 'desc']).default('asc'),
+    sortBy: z.enum(['date', 'value']).default('date'),
+    status: z.enum(["RASCUNHO", "ENVIADO", "APROVADO", "PAGO", "REJEITADO", "CANCELADO", "all"]).optional().default("all"),
 });
