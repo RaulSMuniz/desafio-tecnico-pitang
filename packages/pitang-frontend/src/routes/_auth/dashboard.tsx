@@ -17,14 +17,20 @@ function DashboardPage() {
   const { data: statsRes, isLoading: loadingStats } = useSWR('/reimbursements/stats', (url) =>
     fetcher.get<any>(url).then(res => res.data?.data || res.data)
   );
-  const getProfileStatusFilter = () => {
-    if (user?.perfil === 'FINANCEIRO') return 'PAGO,APROVADO';
-    if (user?.perfil === 'GESTOR') return 'REJEITADO,APROVADO,PAGO,CANCELADO';
-    return 'all';
+  const getProfileFilters = () => {
+    if (user?.perfil === 'FINANCEIRO') {
+      return { status: 'APROVADO,REJEITADO,PAGO', acao: 'APPROVED,REJECTED,PAID' };
+    }
+    if (user?.perfil === 'GESTOR') {
+      return { status: 'ENVIADO,APROVADO,REJEITADO', acao: 'SUBMITTED,APPROVED,REJECTED' };
+    }
+    return { status: 'all', acao: 'all' };
   };
 
-  // Usando SWR para atividades recentes (Histórico) com filtro de status por perfil
-  const { data: historyRes, isLoading: loadingHistory } = useSWR(`/history?pageSize=5&status=${getProfileStatusFilter()}`, (url: any) =>
+  const { status, acao } = getProfileFilters();
+
+  // Usando SWR para atividades recentes (Histórico) com filtro de status e ação por perfil
+  const { data: historyRes, isLoading: loadingHistory } = useSWR(`/history?pageSize=5&status=${status}&acao=${acao}`, (url: any) =>
     fetcher.get<any>(url).then(res => res.data?.data || res.data)
   );
 
