@@ -8,6 +8,8 @@
 !.vscode/
 !package.json
 !package-lock.json
+!.dockerignore
+!docker-compose.yml
 
 # Bloqueios específicos (O que NÃO deve ir mesmo dentro das pastas acima)
 **/node_modules/
@@ -22,6 +24,4 @@
 **/.DS_Store
 Thumbs.db
 
-# Arquivos de planejamento e desafio (opcional manter ignorado)
 desafio-estags-pitang.html
-implementation_plan.md
