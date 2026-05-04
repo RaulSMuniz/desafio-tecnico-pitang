@@ -1,7 +1,7 @@
 import type { Request, Response, NextFunction } from "express";
 import bcrypt from "bcryptjs";
 import { prisma } from "../../core/PrismaClient.js";
-import { paramId, updateUserSchema, userSchema } from "../../schemas/index.js";
+import { paramId, updateUserSchema, userSchema, userSearchSchema } from "../../schemas/index.js";
 import z from "zod";
 
 /**
@@ -9,7 +9,29 @@ import z from "zod";
  */
 export async function getUsers(req: Request, res: Response, next: NextFunction) {
     try {
+        const result = userSearchSchema.safeParse(req.query);
+
+        if (!result.success) {
+            return res.status(400).json({
+                message: "Parâmetros de busca inválidos",
+                errors: z.treeifyError(result.error),
+                statusCode: 400
+            });
+        }
+
+        const { search } = result.data;
+
+        const where: any = {};
+
+        if (search) {
+            where.OR = [
+                { nome: { contains: String(search), mode: 'insensitive' } },
+                { email: { contains: String(search), mode: 'insensitive' } }
+            ];
+        }
+
         const userList = await prisma.user.findMany({
+            where,
             select: {
                 id: true,
                 nome: true,
@@ -139,9 +161,9 @@ export async function deleteUser(req: Request, res: Response, next: NextFunction
 
         await prisma.user.update({
             where: { id },
-            data: { 
+            data: {
                 deletadoEm: new Date(),
-                ativo: false 
+                ativo: false
             }
         });
 
