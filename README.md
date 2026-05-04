@@ -17,6 +17,13 @@ Este projeto é um monorepo que utiliza **npm workspaces**. Siga os passos abaix
 git clone https://github.com/RaulSMuniz/desafio-tecnico-pitang.git
 ```
 
+### Via Docker
+```bash
+docker compose up -d
+```
+
+### Via npm:
+
 ### Passo 2: Instalar dependências
 Na raiz do projeto, instale todas as dependências:
 ```bash
@@ -133,6 +140,9 @@ Este projeto foi construído utilizando as tecnologias exigidas e sugeridas na e
 - [x] **Filtro por descrição do pedido, categoria e data**: Implementado para todas as listas de solicitações.
 - [x] **Soft delete**: Implementado para usuários e categorias.
 - [x] **Dashboard**: Dashboard com métricas totais e atividades recentes baseadas no perfil do usuário.
+- [x] **Paginação**: Paginação implementada no backend em relação as solicitações de reembolso. É consumida corretamente no frontend, tanto no dashboard total com métricas, quanto nas listas de solicitações de reembolso. 
+- [x] **Filtros**: Filtros de nome do colaborador, categoria, status e ordenação por data ou valor implementada nas solicitações de reembolso. Filtro de nome do colaborador ou e-mail do colaborador implementado no painel de usuários do Administrador.
+- [x] **Docker**: O projeto está dockerizado, permitindo fácil execução em qualquer ambiente.
 
 ---
 
