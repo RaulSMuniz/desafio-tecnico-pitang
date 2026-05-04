@@ -47,13 +47,15 @@ export async function getReimbursements(req: Request, res: Response, next: NextF
             };
         }
 
+        const sortField = pagination.sortBy === 'value' ? 'valor' : 'dataDespesa';
+
         const [totalCount, reimbursementList] = await Promise.all([
             prisma.reimbursement.count({ where }),
             prisma.reimbursement.findMany({
                 where,
                 skip: (pagination.page - 1) * pagination.pageSize,
                 take: pagination.pageSize,
-                orderBy: { criadoEm: pagination.sort },
+                orderBy: { [sortField]: pagination.sort },
                 include: {
                     categoria: true,
                     solicitante: {
