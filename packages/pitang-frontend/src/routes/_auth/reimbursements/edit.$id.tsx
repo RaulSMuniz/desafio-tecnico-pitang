@@ -24,7 +24,7 @@ export const Route = createFileRoute('/_auth/reimbursements/edit/$id')({
   component: EditReimbursementPage,
 })
 
-export function EditReimbursementPage() {
+function EditReimbursementPage() {
   const { id } = Route.useParams()
   const navigate = useNavigate()
 

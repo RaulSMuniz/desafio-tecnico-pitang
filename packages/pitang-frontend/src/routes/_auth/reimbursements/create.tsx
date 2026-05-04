@@ -24,7 +24,7 @@ export const Route = createFileRoute('/_auth/reimbursements/create')({
   component: CreateReimbursementPage,
 })
 
-export function CreateReimbursementPage() {
+function CreateReimbursementPage() {
   const navigate = useNavigate()
   const { data: categoriesData, isLoading: loadingCats } = useSWR('/categories', (url) =>
     fetcher.get(url).then(res => {
