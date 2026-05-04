@@ -83,7 +83,7 @@ export async function ensureAuthenticated(req: Request, res: Response, next: Nex
 
         req.user = {
             id: decoded.sub,
-            perfil: user.perfil // Usamos o perfil do BANCO, não o do Token
+            perfil: user.perfil
         };
 
         return next();
