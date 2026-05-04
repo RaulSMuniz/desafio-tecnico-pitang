@@ -6,6 +6,7 @@ WORKDIR /app
 # Copiar arquivos de configuração do monorepo
 COPY package*.json ./
 COPY packages/pitang-frontend/package*.json ./packages/pitang-frontend/
+COPY packages/pitang-backend/package*.json ./packages/pitang-backend/
 
 # Instalar dependências usando workspaces
 RUN npm install

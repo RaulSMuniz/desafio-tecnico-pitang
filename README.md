@@ -22,6 +22,8 @@ git clone https://github.com/RaulSMuniz/desafio-tecnico-pitang.git
 docker compose up -d
 ```
 
+Os containers estarão disponíveis em `http://localhost:80` (Frontend) e `http://localhost:3333` (Backend).
+
 ### Via npm:
 
 ### Passo 2: Instalar dependências

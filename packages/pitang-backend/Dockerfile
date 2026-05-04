@@ -1,13 +1,14 @@
 FROM node:20-slim
 
-# Instalar dependências necessárias para o Prisma e PG
-RUN apt-get update && apt-get install -y openssl libssl-dev
+# Instalar dependências necessárias para o Prisma, PG e Healthcheck
+RUN apt-get update && apt-get install -y openssl libssl-dev curl
 
 WORKDIR /app
 
 # Copiar arquivos de configuração do monorepo
 COPY package*.json ./
 COPY packages/pitang-backend/package*.json ./packages/pitang-backend/
+COPY packages/pitang-frontend/package*.json ./packages/pitang-frontend/
 
 # Instalar todas as dependências usando workspaces
 RUN npm install
