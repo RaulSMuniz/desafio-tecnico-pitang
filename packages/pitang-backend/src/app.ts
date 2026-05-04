@@ -12,6 +12,10 @@ import historyRouter from "./http/routes/history.routes.js";
 
 const app = express();
 
+app.get("/health", (req, res) => {
+    res.status(200).json({ status: "ok" });
+});
+
 app.use(express.json());
 
 app.use(cors({
