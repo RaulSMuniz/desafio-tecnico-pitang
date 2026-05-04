@@ -37,7 +37,10 @@ function ReimbursementsKanban() {
     const [activeFilters, setActiveFilters] = useState<FilterState>({
         search: '',
         categoryId: 'all',
-        date: ''
+        date: '',
+        status: 'all',
+        sortBy: 'date',
+        sort: 'asc'
     })
 
     // Resetar para página 1 ao filtrar
@@ -47,7 +50,7 @@ function ReimbursementsKanban() {
 
     // Usando SWR para busca de dados com cache e revalidação automática
     const { data: response, isLoading } = useSWR<any>(
-        `/reimbursements?page=${page}&pageSize=${pageSize}&sort=asc&search=${activeFilters.search}&categoryId=${activeFilters.categoryId}&date=${activeFilters.date}`,
+        `/reimbursements?page=${page}&pageSize=${pageSize}&sort=${activeFilters.sort}&sortBy=${activeFilters.sortBy}&search=${activeFilters.search}&categoryId=${activeFilters.categoryId}&date=${activeFilters.date}&status=${activeFilters.status}`,
         (url: any) => fetcher.get(url).then(res => res.data?.data ? res.data : res)
     )
 
@@ -88,7 +91,7 @@ function ReimbursementsKanban() {
         try {
             await fetcher.post(`/reimbursements/${id}/${action}`, data)
             toast.success("Operação realizada!")
-            mutate(`/reimbursements?page=${page}&pageSize=${pageSize}&sort=asc&search=${activeFilters.search}&categoryId=${activeFilters.categoryId}&date=${activeFilters.date}`) // Revalida o cache globalmente
+            mutate(`/reimbursements?page=${page}&pageSize=${pageSize}&sort=${activeFilters.sort}&sortBy=${activeFilters.sortBy}&search=${activeFilters.search}&categoryId=${activeFilters.categoryId}&date=${activeFilters.date}&status=${activeFilters.status}`) // Revalida o cache globalmente
             setIsRejectModalOpen(false)
         } catch (error: any) {
             toast.error(error.info?.message || "Erro na operação")
