@@ -23,13 +23,13 @@ function DashboardPage() {
     return 'all';
   };
 
-  const { data: listRes, isLoading: loadingList } = useSWR(`/reimbursements?pageSize=5&sort=desc&sortBy=atualizadoEm&status=${getProfileStatusFilter()}`, (url: any) =>
+  // Usando SWR para atividades recentes (Histórico) com filtro de status por perfil
+  const { data: historyRes, isLoading: loadingHistory } = useSWR(`/history?pageSize=5&status=${getProfileStatusFilter()}`, (url: any) =>
     fetcher.get<any>(url).then(res => res.data?.data || res.data)
   );
 
   const stats = statsRes;
-  const reimbursements = Array.isArray(listRes) ? listRes : [];
-  const loading = loadingStats || loadingList;
+  const loading = loadingStats || loadingHistory;
 
   const isGestor = user?.perfil === 'GESTOR';
   const isFinanceiro = user?.perfil === 'FINANCEIRO';
@@ -43,21 +43,22 @@ function DashboardPage() {
     totalCount: 0
   };
 
-  const getStatusBadge = (status: string) => {
+  const getActionBadge = (action: string) => {
     const configs: any = {
-      'RASCUNHO': 'bg-slate-100 text-slate-600',
-      'ENVIADO': 'bg-indigo-100 text-indigo-600',
-      'APROVADO': 'bg-green-100 text-green-600',
-      'REJEITADO': 'bg-red-100 text-red-600',
-      'PAGO': 'bg-amber-100 text-amber-600',
-      'CANCELADO': 'bg-slate-200 text-slate-500',
+      'CREATED': { label: 'Criado', color: 'bg-blue-100 text-blue-600' },
+      'UPDATED': { label: 'Editado', color: 'bg-orange-100 text-orange-600' },
+      'SUBMITTED': { label: 'Enviado', color: 'bg-indigo-100 text-indigo-600' },
+      'APPROVED': { label: 'Aprovado', color: 'bg-green-100 text-green-600' },
+      'REJECTED': { label: 'Rejeitado', color: 'bg-red-100 text-red-600' },
+      'PAID': { label: 'Pago', color: 'bg-amber-100 text-amber-600' },
+      'CANCELED': { label: 'Cancelado', color: 'bg-slate-200 text-slate-500' },
     };
-    return configs[status] || 'bg-slate-100 text-slate-600';
+    return configs[action] || { label: action, color: 'bg-slate-100 text-slate-600' };
   };
 
   const activities = useMemo(() => {
-    return [...reimbursements];
-  }, [reimbursements]);
+    return Array.isArray(historyRes) ? historyRes : [];
+  }, [historyRes]);
 
   const formatActivityDate = (date: string) => {
     const d = dayjs(date);
@@ -193,9 +194,9 @@ function DashboardPage() {
         )}
       </div>
 
-      {reimbursements.length === 0 ? (
+      {activities.length === 0 ? (
         <DashboardEmptyState profile={user?.perfil} />
-      ) : activities.length > 0 && (
+      ) : (
         <div className="bg-white rounded-3xl border border-slate-100 shadow-sm overflow-hidden text-left">
           <div className="p-8 border-b border-slate-50 flex items-center justify-between">
             <div>
@@ -210,55 +211,50 @@ function DashboardPage() {
           </div>
 
           <div className="divide-y divide-slate-50">
-            {activities.slice(0, 5).map((r) => (
-              <div key={r.id} className="flex items-center justify-between p-6 hover:bg-slate-50 transition-colors group">
-                <div className="flex items-center gap-4">
-                  <div className={`h-12 w-12 rounded-2xl flex items-center justify-center font-bold text-lg shadow-sm ${getStatusBadge(r.status)}`}>
-                    {r.status[0]}
-                  </div>
-                  <div>
-                    <p className="text-sm font-bold text-slate-900 group-hover:text-orange-600 transition-colors">{r.descricao}</p>
-                    <div className="flex flex-wrap items-center gap-x-2 gap-y-1 mt-1">
-                      <span className={`text-[9px] font-black uppercase px-2 py-0.5 rounded-full ${getStatusBadge(r.status)}`}>
-                        {r.status}
-                      </span>
-                      <span className="text-[10px] text-slate-400 font-bold uppercase tracking-tighter">
-                        {formatActivityDate(r.atualizadoEm || r.criadoEm)}
-                      </span>
-                      <span className="text-[10px] text-slate-300 font-bold">•</span>
-                      <span className="text-[10px] text-slate-500 font-medium">
-                        Por: <span className="font-bold text-slate-700">
-                          {(() => {
-                            // Conforme o backend, o campo é 'historicos' e contém um objeto 'usuario' com 'nome'
-                            const lastAction = r.historicos && r.historicos.length > 0
-                              ? r.historicos[r.historicos.length - 1]
-                              : null;
+            {activities.map((h: any) => {
+              const actionInfo = getActionBadge(h.acao);
+              const r = h.solicitacao || {};
 
-                            if (!lastAction || !lastAction.usuario) {
-                              return r.solicitante?.nome === user?.nome ? 'Você' : (r.solicitante?.nome || 'Sistema');
-                            }
-
-                            const actorName = lastAction.usuario.nome;
-                            return actorName === user?.nome ? 'Você' : actorName;
-                          })()}
+              return (
+                <div key={h.id} className="flex items-center justify-between p-6 hover:bg-slate-50 transition-colors group">
+                  <div className="flex items-center gap-4">
+                    <div className={`h-12 w-12 rounded-2xl flex items-center justify-center font-bold text-lg shadow-sm ${actionInfo.color}`}>
+                      {actionInfo.label[0]}
+                    </div>
+                    <div>
+                      <p className="text-sm font-bold text-slate-900 group-hover:text-orange-600 transition-colors">{r.descricao || 'Sem descrição'}</p>
+                      <div className="flex flex-wrap items-center gap-x-2 gap-y-1 mt-1">
+                        <span className={`text-[9px] font-black uppercase px-2 py-0.5 rounded-full ${actionInfo.color}`}>
+                          {actionInfo.label}
                         </span>
-                      </span>
+                        <span className="text-[10px] text-slate-400 font-bold uppercase tracking-tighter">
+                          {formatActivityDate(h.criadoEm)}
+                        </span>
+                        <span className="text-[10px] text-slate-300 font-bold">•</span>
+                        <span className="text-[10px] text-slate-500 font-medium">
+                          Por: <span className="font-bold text-slate-700">
+                            {h.usuario?.nome === user?.nome ? 'Você' : (h.usuario?.nome || 'Sistema')}
+                          </span>
+                        </span>
+                      </div>
                     </div>
                   </div>
+                  <div className="text-right">
+                    <p className="font-black text-slate-900">
+                      {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(r.valor || 0)}
+                    </p>
+                    <p className="text-[9px] text-slate-400 font-bold uppercase mt-1">
+                      {r.categoria?.nome || 'Sem categoria'}
+                    </p>
+                  </div>
                 </div>
-                <div className="text-right">
-                  <p className="font-black text-slate-900">
-                    {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(r.valor)}
-                  </p>
-                  <p className="text-[9px] text-slate-400 font-bold uppercase mt-1">
-                    {r.categoria?.nome || 'Sem categoria'}
-                  </p>
-                </div>
-              </div>
-            ))}
+              );
+            })}
           </div>
         </div>
       )}
     </div>
   )
 }
+
+export default DashboardPage;
