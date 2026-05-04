@@ -6,8 +6,11 @@ import { AuthProvider } from './contexts/AuthContext'
 import { useAuth } from './hooks/use-auth'
 import './index.css'
 
+import { NotFound } from './components/not-found'
+
 const router = createRouter({
   routeTree,
+  defaultNotFoundComponent: NotFound,
   context: {
     auth: undefined!,
   }
