@@ -71,4 +71,5 @@ export const paginationQuery = z.object({
     search: z.string().optional().default(""),
     categoryId: z.string().optional().default("all"),
     date: z.string().optional().default(""),
+    acao: z.string().optional().default("all"),
 });

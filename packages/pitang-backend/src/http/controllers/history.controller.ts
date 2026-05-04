@@ -87,7 +87,7 @@ export async function getHistory(req: Request, res: Response, next: NextFunction
             });
         }
 
-        const { pageSize, status } = result.data;
+        const { pageSize, status, acao } = result.data;
 
         const where: any = perfil === "COLABORADOR"
             ? { solicitacao: { solicitanteId: usuarioId } }
@@ -99,6 +99,11 @@ export async function getHistory(req: Request, res: Response, next: NextFunction
                 ...where.solicitacao,
                 status: statusArray.length > 1 ? { in: statusArray } : status
             };
+        }
+
+        if (acao && acao !== 'all') {
+            const acaoArray = String(acao).split(',');
+            where.acao = acaoArray.length > 1 ? { in: acaoArray } : acao;
         }
 
         const history = await prisma.history.findMany({
