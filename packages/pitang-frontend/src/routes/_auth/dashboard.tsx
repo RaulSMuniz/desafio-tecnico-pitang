@@ -67,13 +67,20 @@ function DashboardPage() {
   }, [historyRes]);
 
   const formatActivityDate = (date: string) => {
-    const d = dayjs(date);
+    let d = dayjs(date);
+
+    if (!d.isValid() && date.includes('/')) {
+      const [datePart, timePart] = date.split(' ');
+      const [day, month, year] = datePart.split('/');
+      d = dayjs(`${year}-${month}-${day}T${timePart || '00:00:00'}`);
+    }
+
     const now = dayjs();
 
     if (d.isSame(now, 'day')) return `Hoje às ${d.format('HH:mm')}`;
     if (d.isSame(now.subtract(1, 'day'), 'day')) return `Ontem às ${d.format('HH:mm')}`;
 
-    return d.format('DD/MM/YYYY [às] HH:mm');
+    return d.isValid() ? d.format('DD/MM/YYYY [às] HH:mm') : date;
   };
 
   const getActivityTitle = () => {
