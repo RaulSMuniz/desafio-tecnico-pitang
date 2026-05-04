@@ -1,5 +1,5 @@
 import { createFileRoute, Outlet, useNavigate } from '@tanstack/react-router'
-import { useState, useMemo } from 'react'
+import { useState, useMemo, useEffect } from 'react'
 import useSWR, { mutate } from 'swr'
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
@@ -21,7 +21,6 @@ import { ViewReimbursementModal } from '@/components/view-modal'
 
 import { ReimbursementFilters } from '@/components/reimbursement-filters'
 import type { FilterState } from '@/components/reimbursement-filters'
-import dayjs from 'dayjs'
 
 type StatusReembolso = 'RASCUNHO' | 'ENVIADO' | 'APROVADO' | 'REJEITADO' | 'PAGO' | 'CANCELADO'
 
@@ -33,22 +32,32 @@ function ReimbursementsKanban() {
     const { user } = useAuth()
     const navigate = useNavigate()
 
-    // Usando SWR para busca de dados com cache e revalidação automática
-    const { data, isLoading } = useSWR<any>('/reimbursements', (url: any) =>
-        fetcher.get(url).then(res => Array.isArray(res) ? res : res.data?.data || res.data || [])
-    )
-
-    const [isRejectModalOpen, setIsRejectModalOpen] = useState(false)
-    const [isViewModalOpen, setIsViewModalOpen] = useState(false)
-    const [selectedData, setSelectedData] = useState<any>(null)
-    const [selectedId, setSelectedId] = useState<string | null>(null)
+    const [page, setPage] = useState(1)
+    const [pageSize] = useState(20)
     const [activeFilters, setActiveFilters] = useState<FilterState>({
         search: '',
         categoryId: 'all',
         date: ''
     })
 
-    const reimbursements = data || []
+    // Resetar para página 1 ao filtrar
+    useEffect(() => {
+        setPage(1)
+    }, [activeFilters])
+
+    // Usando SWR para busca de dados com cache e revalidação automática
+    const { data: response, isLoading } = useSWR<any>(
+        `/reimbursements?page=${page}&pageSize=${pageSize}&sort=asc&search=${activeFilters.search}&categoryId=${activeFilters.categoryId}&date=${activeFilters.date}`,
+        (url: any) => fetcher.get(url).then(res => res.data?.data ? res.data : res)
+    )
+
+    const reimbursements = response?.data || []
+    const meta = response?.meta || { totalCount: 0, totalPages: 1, page: 1 }
+
+    const [isRejectModalOpen, setIsRejectModalOpen] = useState(false)
+    const [isViewModalOpen, setIsViewModalOpen] = useState(false)
+    const [selectedData, setSelectedData] = useState<any>(null)
+    const [selectedId, setSelectedId] = useState<string | null>(null)
 
     const handleEdit = (id: string) => navigate({ to: `/reimbursements/edit/${id}` })
 
@@ -79,7 +88,7 @@ function ReimbursementsKanban() {
         try {
             await fetcher.post(`/reimbursements/${id}/${action}`, data)
             toast.success("Operação realizada!")
-            mutate('/reimbursements') // Revalida o cache globalmente
+            mutate(`/reimbursements?page=${page}&pageSize=${pageSize}&sort=asc&search=${activeFilters.search}&categoryId=${activeFilters.categoryId}&date=${activeFilters.date}`) // Revalida o cache globalmente
             setIsRejectModalOpen(false)
         } catch (error: any) {
             toast.error(error.info?.message || "Erro na operação")
@@ -93,24 +102,8 @@ function ReimbursementsKanban() {
             result = result.filter(r => ['APROVADO', 'PAGO', 'REJEITADO', 'CANCELADO'].includes(r.status))
         }
 
-        if (activeFilters.search) {
-            const term = activeFilters.search.toLowerCase()
-            result = result.filter(r =>
-                r.descricao.toLowerCase().includes(term) ||
-                r.solicitante?.nome?.toLowerCase().includes(term)
-            )
-        }
-
-        if (activeFilters.categoryId !== 'all') {
-            result = result.filter(r => String(r.categoriaId) === activeFilters.categoryId)
-        }
-
-        if (activeFilters.date) {
-            result = result.filter(r => dayjs(r.dataDespesa).isSame(dayjs(activeFilters.date), 'day'))
-        }
-
         return result
-    }, [reimbursements, user, activeFilters])
+    }, [reimbursements, user])
 
     const columns: { title: string; status: StatusReembolso[]; icon: any }[] = [
         { title: "Rascunhos", status: ['RASCUNHO'], icon: ClipboardList },
@@ -194,6 +187,32 @@ function ReimbursementsKanban() {
                             </div>
                         )
                     })}
+                </div>
+            </div>
+
+            <div className="flex items-center justify-between px-8 py-4 bg-white border-t border-slate-200 shrink-0">
+                <div className="text-[10px] font-bold uppercase text-slate-400 tracking-widest">
+                    Página {meta.page} de {meta.totalPages} • Total: {meta.totalCount} itens
+                </div>
+                <div className="flex gap-2">
+                    <Button
+                        variant="outline"
+                        size="sm"
+                        disabled={page === 1 || isLoading}
+                        onClick={() => setPage(p => Math.max(1, p - 1))}
+                        className="h-8 rounded-xl font-bold text-xs"
+                    >
+                        Anterior
+                    </Button>
+                    <Button
+                        variant="outline"
+                        size="sm"
+                        disabled={page >= meta.totalPages || isLoading}
+                        onClick={() => setPage(p => p + 1)}
+                        className="h-8 rounded-xl font-bold text-xs"
+                    >
+                        Próximo
+                    </Button>
                 </div>
             </div>
 

@@ -1,46 +1,79 @@
 import type { Request, Response, NextFunction } from "express";
 import { prisma } from "../../core/PrismaClient.js";
-import { paramId, reimbursementSchema } from "../../schemas/index.js";
+import { paramId, reimbursementSchema, paginationQuery } from "../../schemas/index.js";
 import z from "zod";
 
 export async function getReimbursements(req: Request, res: Response, next: NextFunction) {
     try {
-        const where = req.user.perfil === 'COLABORADOR'
+        const { data: pagination, error } = paginationQuery.safeParse(req.query);
+
+        if (error) {
+            return res.status(400).json({
+                message: "Parâmetros de paginação inválidos",
+                errors: z.treeifyError(error),
+                statusCode: 400
+            });
+        }
+
+        const where: any = req.user.perfil === 'COLABORADOR'
             ? { solicitanteId: req.user.id }
             : {};
 
-        const reimbursementList = await prisma.reimbursement.findMany({
-            where,
-            include: {
-                categoria: true,
-                solicitante: {
-                    select: {
-                        id: true,
-                        nome: true,
-                        email: true,
-                        perfil: true
-                    }
-                },
-                anexos: true,
-                historicos: {
-                    include: {
-                        usuario: {
-                            select: {
-                                nome: true,
-                                perfil: true
+        const { search, categoryId, date } = req.query;
+
+        if (search) {
+            where.OR = [
+                { descricao: { contains: String(search), mode: 'insensitive' } },
+                { solicitante: { nome: { contains: String(search), mode: 'insensitive' } } }
+            ];
+        }
+
+        if (categoryId && categoryId !== 'all') {
+            where.categoriaId = Number(categoryId);
+        }
+
+        if (date) {
+            const start = new Date(String(date));
+            const end = new Date(start);
+            end.setDate(end.getDate() + 1);
+
+            where.dataDespesa = {
+                gte: start,
+                lt: end
+            };
+        }
+
+        const [totalCount, reimbursementList] = await Promise.all([
+            prisma.reimbursement.count({ where }),
+            prisma.reimbursement.findMany({
+                where,
+                skip: (pagination.page - 1) * pagination.pageSize,
+                take: pagination.pageSize,
+                orderBy: { criadoEm: pagination.sort },
+                include: {
+                    categoria: true,
+                    solicitante: {
+                        select: {
+                            id: true,
+                            nome: true,
+                            email: true,
+                            perfil: true
+                        }
+                    },
+                    anexos: true,
+                    historicos: {
+                        include: {
+                            usuario: {
+                                select: {
+                                    nome: true,
+                                    perfil: true
+                                }
                             }
                         }
                     }
                 }
-            }
-        });
-
-        if (!reimbursementList) {
-            return res.status(204).json({
-                message: "Nenhum reembolso encontrado",
-                statusCode: 204,
-            });
-        }
+            })
+        ]);
 
         const formatted = reimbursementList.map(item => ({
             ...item,
@@ -50,7 +83,13 @@ export async function getReimbursements(req: Request, res: Response, next: NextF
         return res.status(200).json({
             message: "Reembolsos listados com sucesso",
             statusCode: 200,
-            data: formatted
+            data: formatted,
+            meta: {
+                totalCount,
+                page: pagination.page,
+                pageSize: pagination.pageSize,
+                totalPages: Math.ceil(totalCount / pagination.pageSize)
+            }
         });
     } catch (error) {
         next(error)

@@ -57,3 +57,9 @@ export const historySchema = z.object({
     acao: z.enum(["RASCUNHO", "ENVIADO", "APROVADO", "PAGO", "REJEITADO", "CANCELADO"]),
     usuarioId: z.uuid("ID de usuário inválido"),
 })
+
+export const paginationQuery = z.object({
+    page: z.coerce.number().default(1),
+    pageSize: z.coerce.number().max(100).default(20),
+    sort: z.enum(['asc', 'desc']).default('asc'),
+});
