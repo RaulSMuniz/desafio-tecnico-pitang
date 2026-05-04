@@ -51,7 +51,7 @@ function ReimbursementsKanban() {
     const getStatusParam = () => {
         if (activeFilters.status !== 'all') return activeFilters.status;
         if (user?.perfil === 'FINANCEIRO') return 'APROVADO,PAGO,REJEITADO,CANCELADO';
-        if (user?.perfil === 'GESTOR') return 'ENVIADO,APROVADO,REJEITADO,PAGO';
+        if (user?.perfil === 'GESTOR') return 'ENVIADO,APROVADO,REJEITADO,PAGO,CANCELADO';
         return 'all';
     };
 

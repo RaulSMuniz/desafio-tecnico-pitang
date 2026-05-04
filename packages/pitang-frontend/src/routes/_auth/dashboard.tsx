@@ -19,7 +19,7 @@ function DashboardPage() {
   );
   const getProfileStatusFilter = () => {
     if (user?.perfil === 'FINANCEIRO') return 'PAGO,APROVADO';
-    if (user?.perfil === 'GESTOR') return 'REJEITADO,APROVADO,PAGO';
+    if (user?.perfil === 'GESTOR') return 'REJEITADO,APROVADO,PAGO,CANCELADO';
     return 'all';
   };
 
