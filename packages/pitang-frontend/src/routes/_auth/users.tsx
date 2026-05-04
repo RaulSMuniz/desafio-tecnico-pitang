@@ -1,7 +1,8 @@
 import { createFileRoute } from '@tanstack/react-router'
 import { useState, useEffect, useMemo } from 'react'
 import { Button } from "@/components/ui/button"
-import { UserPlus, Users, UserX } from 'lucide-react'
+import { Input } from "@/components/ui/input"
+import { UserPlus, Users, UserX, Search as SearchIcon } from 'lucide-react'
 import fetcher from '@/api/fetcher'
 import { toast } from 'sonner'
 import { updateUserSchema, createUserSchema } from '@/zodSchemas'
@@ -24,6 +25,8 @@ function UsersManagement() {
   const [users, setUsers] = useState<any[]>([])
   const [loading, setLoading] = useState(true)
   const [filter, setFilter] = useState<'ativos' | 'inativos'>('ativos')
+  const [searchTerm, setSearchTerm] = useState('')
+  const [debouncedSearch, setDebouncedSearch] = useState('')
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [isModalOpen, setIsModalOpen] = useState(false)
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false)
@@ -31,10 +34,10 @@ function UsersManagement() {
   const [selectedUser, setSelectedUser] = useState<any>(null)
   const [editData, setEditData] = useState({ nome: '', email: '', perfil: '', senha: '' })
 
-  const loadUsers = async () => {
+  const loadUsers = async (search = '') => {
     try {
       setLoading(true)
-      const response = await fetcher.get<any>('/users')
+      const response = await fetcher.get<any>(`/users?search=${search}`)
       const data = response?.data || response || []
       setUsers(Array.isArray(data) ? data : [])
     } catch (error) {
@@ -44,7 +47,17 @@ function UsersManagement() {
     }
   }
 
-  useEffect(() => { loadUsers() }, [])
+  // Debounce para busca
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setDebouncedSearch(searchTerm)
+    }, 300)
+    return () => clearTimeout(timer)
+  }, [searchTerm])
+
+  useEffect(() => {
+    loadUsers(debouncedSearch)
+  }, [debouncedSearch])
 
   const filteredUsers = useMemo(() => {
     return users.filter(u => filter === 'ativos' ? !u.deletadoEm : !!u.deletadoEm)
@@ -124,6 +137,16 @@ function UsersManagement() {
         </div>
 
         <div className="flex items-center gap-4">
+          <div className="relative w-64">
+            <SearchIcon className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
+            <Input
+              placeholder="Buscar por nome ou e-mail..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="pl-10 h-10 bg-slate-100 border-none rounded-xl focus-visible:ring-red-900/20 text-sm font-medium"
+            />
+          </div>
+
           <div className="flex bg-slate-100 p-1 rounded-xl items-center">
             <button
               onClick={() => setFilter('ativos')}
