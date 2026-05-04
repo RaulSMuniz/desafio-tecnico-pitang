@@ -12,7 +12,8 @@ export async function getHistoryById(req: Request, res: Response, next: NextFunc
             return res.status(400).json({
                 message: "ID da solicitação inválido",
                 errors: z.treeifyError(result.error),
-                statusCode: 400
+                statusCode: 400,
+                error: "Bad Request"
             });
         }
 
@@ -24,13 +25,18 @@ export async function getHistoryById(req: Request, res: Response, next: NextFunc
         });
 
         if (!solicitacao) {
-            return res.status(404).json({ message: "Solicitação não encontrada", statusCode: 404 });
+            return res.status(404).json({
+                message: "Solicitação não encontrada",
+                statusCode: 404,
+                error: "Not Found"
+            });
         }
 
         if (perfil === "COLABORADOR" && solicitacao.solicitanteId !== usuarioId) {
             return res.status(403).json({
                 message: "Acesso negado ao histórico desta solicitação",
-                statusCode: 403
+                statusCode: 403,
+                error: "Forbidden"
             });
         }
 
@@ -55,6 +61,7 @@ export async function getHistoryById(req: Request, res: Response, next: NextFunc
             return res.status(204).json({
                 message: "Nenhum histórico encontrado",
                 statusCode: 204,
+                error: "No Content"
             });
         }
 
@@ -83,7 +90,8 @@ export async function getHistory(req: Request, res: Response, next: NextFunction
             return res.status(400).json({
                 message: "Dados de paginação inválidos",
                 errors: z.treeifyError(result.error),
-                statusCode: 400
+                statusCode: 400,
+                error: "Bad Request"
             });
         }
 

@@ -11,7 +11,8 @@ export async function postAttachmentSimulated(req: Request, res: Response, next:
             return res.status(400).json({
                 message: "Dados de entrada inválidos",
                 errors: z.treeifyError(paramIdResult.error),
-                statusCode: 400
+                statusCode: 400,
+                error: "Bad Request"
             });
         }
 
@@ -22,7 +23,8 @@ export async function postAttachmentSimulated(req: Request, res: Response, next:
             return res.status(400).json({
                 message: result.error.message,
                 errors: z.treeifyError(result.error),
-                statusCode: 400
+                statusCode: 400,
+                error: "Bad Request"
             });
         }
 
@@ -30,17 +32,26 @@ export async function postAttachmentSimulated(req: Request, res: Response, next:
         const reimbursement = await prisma.reimbursement.findUnique({ where: { id } });
 
         if (!reimbursement) {
-            return res.status(404).json({ message: "Reembolso não encontrado", statusCode: 404 });
+            return res.status(404).json({
+                message: "Reembolso não encontrado",
+                statusCode: 404,
+                error: "Not Found"
+            });
         }
 
         if (reimbursement.solicitanteId !== req.user.id) {
-            return res.status(403).json({ message: "Acesso negado", statusCode: 403 });
+            return res.status(403).json({
+                message: "Acesso negado",
+                statusCode: 403,
+                error: "Forbidden"
+            });
         }
 
         if (reimbursement.status !== "RASCUNHO") {
             return res.status(400).json({
                 message: "Não é possível adicionar anexos a um reembolso que já foi enviado ou finalizado.",
-                statusCode: 400
+                statusCode: 400,
+                error: "Bad Request"
             });
         }
 
@@ -67,7 +78,11 @@ export async function getAttachmentById(req: Request, res: Response, next: NextF
     try {
         const paramIdResult = paramId.safeParse(req.params);
         if (!paramIdResult.success) {
-            return res.status(400).json({ message: "ID do reembolso inválido", statusCode: 400 });
+            return res.status(400).json({
+                message: "ID do reembolso inválido",
+                statusCode: 400,
+                error: "Bad Request"
+            });
         }
 
         const solicitacaoId = paramIdResult.data.id;
@@ -77,14 +92,22 @@ export async function getAttachmentById(req: Request, res: Response, next: NextF
         });
 
         if (!reimbursement) {
-            return res.status(404).json({ message: "Reembolso não encontrado", statusCode: 404 });
+            return res.status(404).json({
+                message: "Reembolso não encontrado",
+                statusCode: 404,
+                error: "Not Found"
+            });
         }
 
         const isOwner = reimbursement.solicitanteId === req.user.id;
         const isPrivileged = ['GESTOR', 'FINANCEIRO', 'ADMIN'].includes(req.user.perfil as string);
 
         if (!isOwner && !isPrivileged) {
-            return res.status(403).json({ message: "Acesso negado", statusCode: 403 });
+            return res.status(403).json({
+                message: "Acesso negado",
+                statusCode: 403,
+                error: "Forbidden"
+            });
         }
 
         const attachments = await prisma.attachment.findMany({
@@ -92,7 +115,11 @@ export async function getAttachmentById(req: Request, res: Response, next: NextF
         });
 
         if (!attachments) {
-            return res.status(404).json({ message: "Anexos não encontrados", statusCode: 404 });
+            return res.status(404).json({
+                message: "Anexos não encontrados",
+                statusCode: 404,
+                error: "Not Found"
+            });
         }
 
         return res.status(200).json({

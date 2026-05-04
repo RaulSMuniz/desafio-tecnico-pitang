@@ -17,7 +17,8 @@ export async function login(req: Request, res: Response, next: NextFunction) {
             return res.status(400).json({
                 message: "Dados de login inválidos",
                 errors: z.treeifyError(result.error),
-                statusCode: 400
+                statusCode: 400,
+                error: "Bad Request"
             });
         }
 
@@ -30,14 +31,16 @@ export async function login(req: Request, res: Response, next: NextFunction) {
         if (!user) {
             return res.status(401).json({
                 message: "Usuário não encontrado ou credenciais inválidas",
-                statusCode: 401
+                statusCode: 401,
+                error: "Unauthorized"
             });
         }
 
         if (!user.ativo) {
             return res.status(401).json({
                 message: "Esta conta está desativada. Entre em contato com o administrador.",
-                statusCode: 401
+                statusCode: 401,
+                error: "Unauthorized"
             });
         }
 
@@ -46,7 +49,8 @@ export async function login(req: Request, res: Response, next: NextFunction) {
         if (!isPasswordValid) {
             return res.status(401).json({
                 message: "Credenciais inválidas",
-                statusCode: 401
+                statusCode: 401,
+                error: "Unauthorized"
             });
         }
         const token = jsonwebtoken.sign(
@@ -83,7 +87,11 @@ export async function getMe(req: Request, res: Response, next: NextFunction) {
         const userId = req.user?.id;
 
         if (!userId) {
-            return res.status(401).json({ message: "Não autorizado" });
+            return res.status(401).json({
+                message: "Não autorizado",
+                statusCode: 401,
+                error: "Unauthorized"
+            });
         }
 
         const user = await prisma.user.findUnique({
@@ -99,7 +107,11 @@ export async function getMe(req: Request, res: Response, next: NextFunction) {
         });
 
         if (!user || !user.ativo || user.deletadoEm !== null) {
-            return res.status(401).json({ message: "Usuário inativo ou não encontrado" });
+            return res.status(401).json({
+                message: "Usuário inativo ou não encontrado",
+                statusCode: 401,
+                error: "Unauthorized"
+            });
         }
 
         return res.status(200).json({

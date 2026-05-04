@@ -34,7 +34,11 @@ export async function authMiddleware(
     } = request;
 
     if (!authorization) {
-        return response.status(401).json({ message: "Authorization is missing" });
+        return response.status(401).json({
+            message: "Token de autorização ausente",
+            statusCode: 401,
+            error: "Unauthorized"
+        });
     }
 
     const [, token = ""] = authorization.split(" ");
@@ -44,19 +48,31 @@ export async function authMiddleware(
 
         const user = await prisma.user.findUnique({
             where: { id: decoded.sub || decoded.id },
-            select: { ativo: true, deletadoEm: true, perfil: true }
+            select: { id: true, ativo: true, deletadoEm: true, perfil: true }
         });
 
         if (!user || !user.ativo || user.deletadoEm !== null) {
-            return response.status(401).json({ message: "User is inactive or not found" });
+            return response.status(401).json({
+                message: "Usuário inativo ou não encontrado",
+                statusCode: 401,
+                error: "Unauthorized"
+            });
         }
 
         // Sobrescrevemos o perfil do token pelo perfil atual do banco
+        decoded.sub = user.id;
         decoded.perfil = user.perfil;
-        (request.user as any) = decoded;
+        (request.user as any) = {
+            id: user.id,
+            perfil: user.perfil
+        };
         next();
     } catch (error) {
-        response.status(401).json({ message: "Not authorized" });
+        response.status(401).json({
+            message: "Token inválido ou expirado",
+            statusCode: 401,
+            error: "Unauthorized"
+        });
     }
 }
 
@@ -64,7 +80,11 @@ export async function ensureAuthenticated(req: Request, res: Response, next: Nex
     const authHeader = req.headers.authorization;
 
     if (!authHeader) {
-        return res.status(401).json({ message: "Token missing" });
+        return res.status(401).json({
+            message: "Token de autorização ausente",
+            statusCode: 401,
+            error: "Unauthorized"
+        });
     }
 
     const [, token] = authHeader.split(" ");
@@ -74,20 +94,28 @@ export async function ensureAuthenticated(req: Request, res: Response, next: Nex
 
         const user = await prisma.user.findUnique({
             where: { id: decoded.sub },
-            select: { ativo: true, deletadoEm: true, perfil: true }
+            select: { id: true, ativo: true, deletadoEm: true, perfil: true }
         });
 
         if (!user || !user.ativo || user.deletadoEm !== null) {
-            return res.status(401).json({ message: "User is inactive or not found" });
+            return res.status(401).json({
+                message: "Usuário inativo ou não encontrado",
+                statusCode: 401,
+                error: "Unauthorized"
+            });
         }
 
         req.user = {
-            id: decoded.sub,
+            id: user.id,
             perfil: user.perfil
         };
 
         return next();
     } catch {
-        return res.status(401).json({ message: "Invalid or expired token" });
+        return res.status(401).json({
+            message: "Token inválido ou expirado",
+            statusCode: 401,
+            error: "Unauthorized"
+        });
     }
 }

@@ -15,7 +15,8 @@ export async function getUsers(req: Request, res: Response, next: NextFunction) 
             return res.status(400).json({
                 message: "Parâmetros de busca inválidos",
                 errors: z.treeifyError(result.error),
-                statusCode: 400
+                statusCode: 400,
+                error: "Bad Request"
             });
         }
 
@@ -49,6 +50,7 @@ export async function getUsers(req: Request, res: Response, next: NextFunction) 
             return res.status(204).json({
                 message: "Nenhum usuário encontrado",
                 statusCode: 204,
+                error: "No Content"
             });
         }
 
@@ -70,7 +72,8 @@ export async function getUserById(req: Request, res: Response, next: NextFunctio
             return res.status(400).json({
                 message: "Dados de entrada inválidos",
                 errors: z.treeifyError(result.error),
-                statusCode: 400
+                statusCode: 400,
+                error: "Bad Request"
             });
         }
 
@@ -83,7 +86,8 @@ export async function getUserById(req: Request, res: Response, next: NextFunctio
         if (!user) {
             return res.status(404).json({
                 message: "Usuário não encontrado",
-                statusCode: 404
+                statusCode: 404,
+                error: "Not Found"
             });
         }
 
@@ -108,7 +112,8 @@ export async function postUser(req: Request, res: Response, next: NextFunction) 
             return res.status(400).json({
                 message: "Dados de entrada inválidos",
                 errors: z.treeifyError(result.error),
-                statusCode: 400
+                statusCode: 400,
+                error: "Bad Request"
             });
         }
 
@@ -121,7 +126,8 @@ export async function postUser(req: Request, res: Response, next: NextFunction) 
         if (userExists) {
             return res.status(409).json({
                 message: "Este e-mail já está em uso",
-                statusCode: 409
+                statusCode: 409,
+                error: "Conflict"
             });
         }
 
@@ -153,7 +159,8 @@ export async function deleteUser(req: Request, res: Response, next: NextFunction
         if (!result.success) {
             return res.status(400).json({
                 message: "Dados de entrada inválidos",
-                statusCode: 400
+                statusCode: 400,
+                error: "Bad Request"
             });
         }
 
@@ -183,7 +190,8 @@ export async function putUser(req: Request, res: Response, next: NextFunction) {
             return res.status(400).json({
                 message: "ID inválido",
                 errors: z.treeifyError(paramResult.error),
-                statusCode: 400
+                statusCode: 400,
+                error: "Bad Request"
             });
         }
         const { id } = paramResult.data;
@@ -193,7 +201,8 @@ export async function putUser(req: Request, res: Response, next: NextFunction) {
             return res.status(400).json({
                 message: "Dados de entrada inválidos",
                 errors: z.treeifyError(result.error),
-                statusCode: 400
+                statusCode: 400,
+                error: "Bad Request"
             });
         }
         const { nome, email, senha, perfil } = result.data;
@@ -202,7 +211,8 @@ export async function putUser(req: Request, res: Response, next: NextFunction) {
         if (!currentUser) {
             return res.status(404).json({
                 message: "Usuário não encontrado",
-                statusCode: 404
+                statusCode: 404,
+                error: "Not Found"
             });
         }
 
@@ -211,7 +221,8 @@ export async function putUser(req: Request, res: Response, next: NextFunction) {
             if (emailExists) {
                 return res.status(409).json({
                     message: "Este e-mail já está em uso.",
-                    statusCode: 409
+                    statusCode: 409,
+                    error: "Conflict"
                 });
             }
         }
@@ -249,7 +260,8 @@ export async function restoreUser(req: Request, res: Response, next: NextFunctio
             return res.status(400).json({
                 message: "ID inválido",
                 errors: z.treeifyError(paramResult.error),
-                statusCode: 400
+                statusCode: 400,
+                error: "Bad Request"
             });
         }
         const { id } = paramResult.data;

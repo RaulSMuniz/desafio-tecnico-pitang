@@ -11,7 +11,8 @@ export async function getReimbursements(req: Request, res: Response, next: NextF
             return res.status(400).json({
                 message: "Parâmetros de paginação inválidos",
                 errors: z.treeifyError(error),
-                statusCode: 400
+                statusCode: 400,
+                error: "Bad Request"
             });
         }
 
@@ -118,9 +119,10 @@ export async function postReimbursement(req: Request, res: Response, next: NextF
 
         if (!result.success) {
             return res.status(400).json({
-                message: result.error.message,
+                message: "Dados de entrada inválidos.",
                 errors: z.treeifyError(result.error),
-                statusCode: 400
+                statusCode: 400,
+                error: "Bad Request"
             });
         }
 
@@ -135,14 +137,16 @@ export async function postReimbursement(req: Request, res: Response, next: NextF
         if (!categoria) {
             return res.status(400).json({
                 message: "A categoria informada não existe",
-                statusCode: 400
+                statusCode: 400,
+                error: "Bad Request"
             });
         }
 
         if (!categoria.ativo) {
             return res.status(400).json({
                 message: "A categoria informada está inativa e não pode ser utilizada",
-                statusCode: 400
+                statusCode: 400,
+                error: "Bad Request"
             });
         }
 
@@ -166,7 +170,8 @@ export async function postReimbursement(req: Request, res: Response, next: NextF
         if (!reimbursement) {
             return res.status(500).json({
                 message: "Erro ao criar reembolso",
-                statusCode: 500
+                statusCode: 500,
+                error: "Internal Server Error"
             });
         }
 
@@ -188,7 +193,8 @@ export async function getReimbursementById(req: Request, res: Response, next: Ne
             return res.status(400).json({
                 message: "Dados de entrada inválidos",
                 errors: z.treeifyError(result.error),
-                statusCode: 400
+                statusCode: 400,
+                error: "Bad Request"
             });
         }
 
@@ -223,7 +229,8 @@ export async function getReimbursementById(req: Request, res: Response, next: Ne
         if (!reimbursement) {
             return res.status(404).json({
                 message: "Reembolso não encontrado",
-                statusCode: 404
+                statusCode: 404,
+                error: "Not Found"
             });
         }
 
@@ -233,7 +240,8 @@ export async function getReimbursementById(req: Request, res: Response, next: Ne
         if (!isOwner && !isPrivileged) {
             return res.status(403).json({
                 message: "Você não tem permissão para visualizar este reembolso",
-                statusCode: 403
+                statusCode: 403,
+                error: "Forbidden"
             });
         }
 
@@ -256,7 +264,8 @@ export async function putReimbursementById(req: Request, res: Response, next: Ne
             return res.status(400).json({
                 message: bodyResult.error.message,
                 errors: z.treeifyError(bodyResult.error),
-                statusCode: 400
+                statusCode: 400,
+                error: "Bad Request"
             });
         }
 
@@ -264,7 +273,8 @@ export async function putReimbursementById(req: Request, res: Response, next: Ne
             return res.status(400).json({
                 message: "Dados de entrada inválidos",
                 errors: z.treeifyError(paramsResult.error),
-                statusCode: 400
+                statusCode: 400,
+                error: "Bad Request"
             });
         }
 
@@ -279,21 +289,24 @@ export async function putReimbursementById(req: Request, res: Response, next: Ne
         if (!reimbursement) {
             return res.status(404).json({
                 message: "Reembolso não encontrado",
-                statusCode: 404
+                statusCode: 404,
+                error: "Not Found"
             });
         }
 
         if (reimbursement.solicitanteId !== solicitanteId) {
             return res.status(403).json({
                 message: "Você não tem permissão para editar este reembolso",
-                statusCode: 403
+                statusCode: 403,
+                error: "Forbidden"
             });
         }
 
         if (reimbursement.status !== "RASCUNHO") {
             return res.status(400).json({
                 message: "Você não pode editar este reembolso porque ele já foi enviado",
-                statusCode: 400
+                statusCode: 400,
+                error: "Bad Request"
             });
         }
 
@@ -304,14 +317,16 @@ export async function putReimbursementById(req: Request, res: Response, next: Ne
         if (!categoria) {
             return res.status(400).json({
                 message: "A categoria informada não existe",
-                statusCode: 400
+                statusCode: 400,
+                error: "Bad Request"
             });
         }
 
         if (!categoria.ativo) {
             return res.status(400).json({
                 message: "A categoria informada está inativa e não pode ser utilizada",
-                statusCode: 400
+                statusCode: 400,
+                error: "Bad Request"
             });
         }
 
@@ -361,7 +376,8 @@ export async function submitReimbursement(req: Request, res: Response, next: Nex
             return res.status(400).json({
                 message: "Dados de entrada inválidos",
                 errors: z.treeifyError(paramsResult.error),
-                statusCode: 400
+                statusCode: 400,
+                error: "Bad Request"
             });
         }
 
@@ -374,21 +390,24 @@ export async function submitReimbursement(req: Request, res: Response, next: Nex
         if (!reimbursement) {
             return res.status(404).json({
                 message: "Reembolso não encontrado",
-                statusCode: 404
+                statusCode: 404,
+                error: "Not Found"
             });
         }
 
         if (reimbursement.status !== "RASCUNHO") {
             return res.status(400).json({
                 message: "Reembolso já foi enviado",
-                statusCode: 400
+                statusCode: 400,
+                error: "Bad Request"
             });
         }
 
         if (reimbursement.solicitanteId !== req.user.id) {
             return res.status(403).json({
                 message: "Você não tem permissão para enviar este reembolso",
-                statusCode: 403
+                statusCode: 403,
+                error: "Forbidden"
             });
         }
 
@@ -424,7 +443,8 @@ export async function cancelReimbursement(req: Request, res: Response, next: Nex
             return res.status(400).json({
                 message: "Dados de entrada inválidos",
                 errors: z.treeifyError(paramsResult.error),
-                statusCode: 400
+                statusCode: 400,
+                error: "Bad Request"
             });
         }
 
@@ -434,18 +454,29 @@ export async function cancelReimbursement(req: Request, res: Response, next: Nex
         const reimbursement = await prisma.reimbursement.findUnique({ where: { id } });
 
 
-        if (!reimbursement) return res.status(404).json({ message: "Não encontrado", statusCode: 404 });
+        if (!reimbursement) {
+            return res.status(404).json({
+                message: "Não encontrado",
+                statusCode: 404,
+                error: "Not Found"
+            });
+        }
 
         if (reimbursement.solicitanteId !== req.user.id) {
             return res.status(403).json({
                 message: "Você não tem permissão para cancelar este reembolso",
-                statusCode: 403
+                statusCode: 403,
+                error: "Forbidden"
             });
         }
 
         const statusPermitidos = ["RASCUNHO", "ENVIADO"];
         if (!statusPermitidos.includes(reimbursement.status)) {
-            return res.status(400).json({ message: "Status não permite cancelamento", statusCode: 400 });
+            return res.status(400).json({
+                message: "Status não permite cancelamento",
+                statusCode: 400,
+                error: "Bad Request"
+            });
         }
 
         const updatedReimbursement = await prisma.reimbursement.update({
@@ -458,7 +489,11 @@ export async function cancelReimbursement(req: Request, res: Response, next: Nex
             }
         });
 
-        return res.json({ message: "Cancelado com sucesso", statusCode: 200, data: updatedReimbursement });
+        return res.status(200).json({
+            message: "Cancelado com sucesso",
+            statusCode: 200,
+            data: updatedReimbursement
+        });
     } catch (error) { next(error); }
 }
 

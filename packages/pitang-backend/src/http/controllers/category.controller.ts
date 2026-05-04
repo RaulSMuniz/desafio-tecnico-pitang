@@ -25,7 +25,8 @@ export async function postCategory(req: Request, res: Response, next: NextFuncti
             return res.status(400).json({
                 message: "Dados de entrada inválidos",
                 errors: z.treeifyError(result.error),
-                statusCode: 400
+                statusCode: 400,
+                error: "Bad Request"
             });
         }
 
@@ -38,7 +39,8 @@ export async function postCategory(req: Request, res: Response, next: NextFuncti
         if (categoryExists) {
             return res.status(409).json({
                 message: "Esta categoria já está em uso",
-                statusCode: 409
+                statusCode: 409,
+                error: "Conflict"
             });
         }
 
@@ -67,7 +69,8 @@ export async function putCategory(req: Request, res: Response, next: NextFunctio
             return res.status(400).json({
                 message: "Dados de entrada inválidos",
                 errors: z.treeifyError(paramId.error),
-                statusCode: 400
+                statusCode: 400,
+                error: "Bad Request"
             });
         }
 
@@ -79,7 +82,8 @@ export async function putCategory(req: Request, res: Response, next: NextFunctio
             return res.status(400).json({
                 message: "Dados de entrada inválidos",
                 errors: z.treeifyError(result.error),
-                statusCode: 400
+                statusCode: 400,
+                error: "Bad Request"
             });
         }
 
@@ -92,7 +96,16 @@ export async function putCategory(req: Request, res: Response, next: NextFunctio
         if (!categoryExists) {
             return res.status(404).json({
                 message: "Categoria não encontrada",
-                statusCode: 404
+                statusCode: 404,
+                error: "Not Found"
+            });
+        }
+
+        if (!categoryExists.ativo) {
+            return res.status(400).json({
+                message: "Categoria inativa",
+                statusCode: 400,
+                error: "Bad Request"
             });
         }
 
@@ -106,7 +119,8 @@ export async function putCategory(req: Request, res: Response, next: NextFunctio
         if (nameUsedByAnother) {
             return res.status(409).json({
                 message: "Nome da categoria já está em uso",
-                statusCode: 409
+                statusCode: 409,
+                error: "Conflict"
             });
         }
 

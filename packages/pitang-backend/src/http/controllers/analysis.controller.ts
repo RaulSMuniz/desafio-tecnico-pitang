@@ -12,7 +12,8 @@ export async function approveReimbursement(req: Request, res: Response, next: Ne
             return res.status(400).json({
                 message: "Dados de entrada inválidos",
                 errors: z.treeifyError(paramIdResult.error),
-                statusCode: 400
+                statusCode: 400,
+                error: "Bad Request"
             });
         }
 
@@ -21,18 +22,26 @@ export async function approveReimbursement(req: Request, res: Response, next: Ne
         const reimbursement = await prisma.reimbursement.findUnique({ where: { id } });
 
         if (!reimbursement) {
-            return res.status(404).json({ message: "Reembolso não encontrado" });
+            return res.status(404).json({
+                message: "Reembolso não encontrado",
+                statusCode: 404,
+                error: "Not Found"
+            });
         }
 
         if (reimbursement.status !== "ENVIADO") {
             return res.status(400).json({
-                message: "Apenas reembolsos com status 'ENVIADO' podem ser aprovados."
+                message: "Apenas reembolsos com status 'ENVIADO' podem ser aprovados.",
+                statusCode: 400,
+                error: "Bad Request"
             });
         }
 
         if (reimbursement.solicitanteId === userId) {
             return res.status(403).json({
-                message: "Segregação de funções: Você não pode analisar sua própria solicitação."
+                message: "Segregação de funções: Você não pode analisar sua própria solicitação.",
+                statusCode: 403,
+                error: "Forbidden"
             });
         }
 
@@ -50,7 +59,7 @@ export async function approveReimbursement(req: Request, res: Response, next: Ne
             }
         });
 
-        return res.json({
+        return res.status(200).json({
             message: "Reembolso aprovado com sucesso",
             statusCode: 200,
             data: updated
@@ -68,7 +77,8 @@ export async function rejectReimbursement(req: Request, res: Response, next: Nex
             return res.status(400).json({
                 message: "Dados de entrada inválidos",
                 errors: z.treeifyError(paramsResult.error),
-                statusCode: 400
+                statusCode: 400,
+                error: "Bad Request"
             });
         }
 
@@ -80,7 +90,8 @@ export async function rejectReimbursement(req: Request, res: Response, next: Nex
             return res.status(400).json({
                 message: "Dados de entrada inválidos.",
                 errors: z.treeifyError(result.error),
-                statusCode: 400
+                statusCode: 400,
+                error: "Bad Request"
             });
         }
 
@@ -88,19 +99,27 @@ export async function rejectReimbursement(req: Request, res: Response, next: Nex
 
         if (!justificativaRejeicao || justificativaRejeicao.trim().length < 5) {
             return res.status(400).json({
-                message: "A justificativa é obrigatória para rejeitar um reembolso (mínimo 5 caracteres)."
+                message: "A justificativa é obrigatória para rejeitar um reembolso (mínimo 5 caracteres).",
+                statusCode: 400,
+                error: "Bad Request"
             });
         }
 
         const reimbursement = await prisma.reimbursement.findUnique({ where: { id } });
 
         if (!reimbursement || reimbursement.status !== "ENVIADO") {
-            return res.status(400).json({ message: "Solicitação inválida para rejeição." });
+            return res.status(400).json({
+                message: "Solicitação inválida para rejeição.",
+                statusCode: 400,
+                error: "Bad Request"
+            });
         }
 
         if (reimbursement.solicitanteId === userId) {
             return res.status(403).json({
-                message: "Segregação de funções: Você não pode analisar sua própria solicitação."
+                message: "Segregação de funções: Você não pode analisar sua própria solicitação.",
+                statusCode: 403,
+                error: "Forbidden"
             });
         }
 
@@ -119,7 +138,7 @@ export async function rejectReimbursement(req: Request, res: Response, next: Nex
             }
         });
 
-        return res.json({
+        return res.status(200).json({
             message: "Reembolso rejeitado com sucesso",
             statusCode: 200,
             data: updated
@@ -137,7 +156,8 @@ export async function payReimbursement(req: Request, res: Response, next: NextFu
             return res.status(400).json({
                 message: "Dados de entrada inválidos",
                 errors: z.treeifyError(paramsResult.error),
-                statusCode: 400
+                statusCode: 400,
+                error: "Bad Request"
             });
         }
 
@@ -148,13 +168,17 @@ export async function payReimbursement(req: Request, res: Response, next: NextFu
 
         if (!reimbursement || reimbursement.status !== "APROVADO") {
             return res.status(400).json({
-                message: "Apenas reembolsos 'APROVADOS' podem ser marcados como 'PAGO'."
+                message: "Apenas reembolsos 'APROVADOS' podem ser marcados como 'PAGO'.",
+                statusCode: 400,
+                error: "Bad Request"
             });
         }
 
         if (reimbursement.solicitanteId === userId) {
             return res.status(403).json({
-                message: "Segregação de funções: Você não pode analisar sua própria solicitação."
+                message: "Segregação de funções: Você não pode analisar sua própria solicitação.",
+                statusCode: 403,
+                error: "Forbidden"
             });
         }
 
@@ -172,7 +196,7 @@ export async function payReimbursement(req: Request, res: Response, next: NextFu
             }
         });
 
-        return res.json({
+        return res.status(200).json({
             message: "Reembolso pago com sucesso",
             statusCode: 200,
             data: updated
