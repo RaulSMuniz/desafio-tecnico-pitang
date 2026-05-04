@@ -48,9 +48,16 @@ function ReimbursementsKanban() {
         setPage(1)
     }, [activeFilters])
 
+    const getStatusParam = () => {
+        if (activeFilters.status !== 'all') return activeFilters.status;
+        if (user?.perfil === 'FINANCEIRO') return 'APROVADO,PAGO,REJEITADO,CANCELADO';
+        if (user?.perfil === 'GESTOR') return 'ENVIADO,APROVADO,REJEITADO,PAGO';
+        return 'all';
+    };
+
     // Usando SWR para busca de dados com cache e revalidação automática
     const { data: response, isLoading } = useSWR<any>(
-        `/reimbursements?page=${page}&pageSize=${pageSize}&sort=${activeFilters.sort}&sortBy=${activeFilters.sortBy}&search=${activeFilters.search}&categoryId=${activeFilters.categoryId}&date=${activeFilters.date}&status=${activeFilters.status}`,
+        `/reimbursements?page=${page}&pageSize=${pageSize}&sort=${activeFilters.sort}&sortBy=${activeFilters.sortBy}&search=${activeFilters.search}&categoryId=${activeFilters.categoryId}&date=${activeFilters.date}&status=${getStatusParam()}`,
         (url: any) => fetcher.get(url).then(res => res.data?.data ? res.data : res)
     )
 
@@ -91,7 +98,7 @@ function ReimbursementsKanban() {
         try {
             await fetcher.post(`/reimbursements/${id}/${action}`, data)
             toast.success("Operação realizada!")
-            mutate(`/reimbursements?page=${page}&pageSize=${pageSize}&sort=${activeFilters.sort}&sortBy=${activeFilters.sortBy}&search=${activeFilters.search}&categoryId=${activeFilters.categoryId}&date=${activeFilters.date}&status=${activeFilters.status}`) // Revalida o cache globalmente
+            mutate((key: any) => typeof key === 'string' && key.startsWith('/reimbursements'), undefined, { revalidate: true })
             setIsRejectModalOpen(false)
         } catch (error: any) {
             toast.error(error.info?.message || "Erro na operação")
@@ -99,14 +106,8 @@ function ReimbursementsKanban() {
     }
 
     const filteredData = useMemo(() => {
-        let result = [...reimbursements]
-
-        if (user?.perfil === 'FINANCEIRO') {
-            result = result.filter(r => ['APROVADO', 'PAGO', 'REJEITADO', 'CANCELADO'].includes(r.status))
-        }
-
-        return result
-    }, [reimbursements, user])
+        return [...reimbursements]
+    }, [reimbursements])
 
     const columns: { title: string; status: StatusReembolso[]; icon: any }[] = [
         { title: "Rascunhos", status: ['RASCUNHO'], icon: ClipboardList },
@@ -140,6 +141,10 @@ function ReimbursementsKanban() {
                         const cards = filteredData.filter(r => column.status.includes(r.status))
 
                         if (user?.perfil === 'FINANCEIRO' && column.title !== "Aprovados" && column.title !== "Finalizados") {
+                            return null
+                        }
+
+                        if (user?.perfil === 'GESTOR' && column.title === "Rascunhos") {
                             return null
                         }
 

@@ -1,6 +1,7 @@
 import { createFileRoute } from '@tanstack/react-router'
 import { useAuth } from '@/hooks/use-auth'
-import { useEffect, useState, useMemo } from 'react'
+import { useMemo } from 'react'
+import useSWR from 'swr'
 import fetcher from '@/api/fetcher'
 import { StatsCard, DashboardEmptyState } from '@/components/dashboard-components'
 import { PageTitle } from '@/components/page-title'
@@ -13,32 +14,22 @@ export const Route = createFileRoute('/_auth/dashboard')({
 
 function DashboardPage() {
   const { user } = useAuth();
-  const [reimbursements, setReimbursements] = useState<any[]>([]);
-  const [stats, setStats] = useState<any>(null);
-  const [loading, setLoading] = useState(true);
+  const { data: statsRes, isLoading: loadingStats } = useSWR('/reimbursements/stats', (url) =>
+    fetcher.get<any>(url).then(res => res.data?.data || res.data)
+  );
+  const getProfileStatusFilter = () => {
+    if (user?.perfil === 'FINANCEIRO') return 'PAGO,APROVADO';
+    if (user?.perfil === 'GESTOR') return 'REJEITADO,APROVADO,PAGO';
+    return 'all';
+  };
 
-  useEffect(() => {
-    const loadData = async () => {
-      try {
-        setLoading(true);
-        const [statsRes, listRes] = await Promise.all([
-          fetcher.get<any>('/reimbursements/stats'),
-          fetcher.get<any>('/reimbursements?pageSize=5&sort=desc')
-        ]);
+  const { data: listRes, isLoading: loadingList } = useSWR(`/reimbursements?pageSize=5&sort=desc&sortBy=atualizadoEm&status=${getProfileStatusFilter()}`, (url: any) =>
+    fetcher.get<any>(url).then(res => res.data?.data || res.data)
+  );
 
-        const statsData = statsRes.data?.data || statsRes.data;
-        const listData = listRes.data?.data || listRes.data;
-
-        setStats(statsData);
-        setReimbursements(Array.isArray(listData) ? listData : []);
-      } catch (error) {
-        console.error("Erro ao carregar dados do dashboard", error);
-      } finally {
-        setLoading(false);
-      }
-    };
-    loadData();
-  }, []);
+  const stats = statsRes;
+  const reimbursements = Array.isArray(listRes) ? listRes : [];
+  const loading = loadingStats || loadingList;
 
   const isGestor = user?.perfil === 'GESTOR';
   const isFinanceiro = user?.perfil === 'FINANCEIRO';
@@ -65,17 +56,8 @@ function DashboardPage() {
   };
 
   const activities = useMemo(() => {
-    // Como o backend já envia ordenado e limitado, apenas aplicamos filtros de perfil se necessário
-    let result = [...reimbursements];
-
-    if (isFinanceiro) {
-      result = result.filter(r => ['PAGO', 'REJEITADO'].includes(r.status));
-    } else if (isGestor) {
-      result = result.filter(r => ['APROVADO', 'REJEITADO'].includes(r.status));
-    }
-
-    return result;
-  }, [reimbursements, isFinanceiro, isGestor]);
+    return [...reimbursements];
+  }, [reimbursements]);
 
   const formatActivityDate = (date: string) => {
     const d = dayjs(date);

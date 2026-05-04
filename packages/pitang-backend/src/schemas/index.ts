@@ -66,6 +66,6 @@ export const paginationQuery = z.object({
     page: z.coerce.number().default(1),
     pageSize: z.coerce.number().max(100).default(20),
     sort: z.enum(['asc', 'desc']).default('asc'),
-    sortBy: z.enum(['date', 'value']).default('date'),
-    status: z.enum(["RASCUNHO", "ENVIADO", "APROVADO", "PAGO", "REJEITADO", "CANCELADO", "all"]).optional().default("all"),
+    sortBy: z.enum(['date', 'value', 'atualizadoEm']).default('date'),
+    status: z.string().optional().default("all"),
 });

@@ -78,7 +78,7 @@ export function CreateReimbursementPage() {
         )
       }
 
-      mutate('/reimbursements')
+      mutate((key: any) => typeof key === 'string' && key.startsWith('/reimbursements'), undefined, { revalidate: true })
       toast.success("Solicitação criada com sucesso!")
       navigate({ to: '/reimbursements' })
     } catch (error: any) {

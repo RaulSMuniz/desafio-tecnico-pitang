@@ -22,7 +22,12 @@ export async function getReimbursements(req: Request, res: Response, next: NextF
         const { search, categoryId, date, status } = req.query;
 
         if (status && status !== 'all') {
-            where.status = status;
+            const statusArray = String(status).split(',');
+            if (statusArray.length > 1) {
+                where.status = { in: statusArray };
+            } else {
+                where.status = status;
+            }
         }
 
         if (search) {
@@ -47,7 +52,12 @@ export async function getReimbursements(req: Request, res: Response, next: NextF
             };
         }
 
-        const sortField = pagination.sortBy === 'value' ? 'valor' : 'dataDespesa';
+        let sortField: string;
+        switch (pagination.sortBy) {
+            case 'value': sortField = 'valor'; break;
+            case 'atualizadoEm': sortField = 'atualizadoEm'; break;
+            default: sortField = 'dataDespesa';
+        }
 
         const [totalCount, reimbursementList] = await Promise.all([
             prisma.reimbursement.count({ where }),

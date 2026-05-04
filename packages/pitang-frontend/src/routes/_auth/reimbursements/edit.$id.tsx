@@ -102,7 +102,7 @@ export function EditReimbursementPage() {
         )
       }
 
-      mutate('/reimbursements')
+      mutate((key: any) => typeof key === 'string' && key.startsWith('/reimbursements'), undefined, { revalidate: true })
       mutate(`/reimbursements/${id}`)
       toast.success("Solicitação atualizada!")
       navigate({ to: '/reimbursements' })
