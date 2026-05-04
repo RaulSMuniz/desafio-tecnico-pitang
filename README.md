@@ -15,6 +15,8 @@ Este projeto é um monorepo que utiliza **npm workspaces**. Siga os passos abaix
 ### Passo 1: Clonar o repositório
 ```bash
 git clone https://github.com/RaulSMuniz/desafio-tecnico-pitang.git
+
+cd desafio-tecnico-pitang
 ```
 
 ### Via Docker
