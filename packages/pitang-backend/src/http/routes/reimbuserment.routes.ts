@@ -7,6 +7,7 @@ import {
     submitReimbursement,
     putReimbursementById,
     cancelReimbursement,
+    getReimbursementsStats
 } from '../controllers/reimbursement.controller.js';
 import { ensureAuthenticated } from '../middlewares/auth.middleware.js';
 import { roleRestrictedMiddleware } from "../middlewares/role.restricted.middleware.js";
@@ -16,6 +17,7 @@ const reimbursementRouter = express.Router();
 
 reimbursementRouter.use(ensureAuthenticated);
 
+reimbursementRouter.get('/reimbursements/stats', roleRestrictedMiddleware([Role.COLABORADOR, Role.GESTOR, Role.FINANCEIRO, Role.ADMIN]), getReimbursementsStats);
 reimbursementRouter.get('/reimbursements', roleRestrictedMiddleware([Role.COLABORADOR, Role.GESTOR, Role.FINANCEIRO, Role.ADMIN]), getReimbursements);
 reimbursementRouter.get('/reimbursements/:id', roleRestrictedMiddleware([Role.COLABORADOR, Role.GESTOR, Role.FINANCEIRO, Role.ADMIN]), getReimbursementById);
 

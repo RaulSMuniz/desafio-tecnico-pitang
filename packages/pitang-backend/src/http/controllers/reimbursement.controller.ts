@@ -19,7 +19,11 @@ export async function getReimbursements(req: Request, res: Response, next: NextF
             ? { solicitanteId: req.user.id }
             : {};
 
-        const { search, categoryId, date } = req.query;
+        const { search, categoryId, date, status } = req.query;
+
+        if (status && status !== 'all') {
+            where.status = status;
+        }
 
         if (search) {
             where.OR = [
@@ -444,4 +448,37 @@ export async function cancelReimbursement(req: Request, res: Response, next: Nex
 
         return res.json({ message: "Cancelado com sucesso", statusCode: 200, data: updatedReimbursement });
     } catch (error) { next(error); }
+}
+
+export async function getReimbursementsStats(req: Request, res: Response, next: NextFunction) {
+    try {
+        const where = req.user.perfil === 'COLABORADOR'
+            ? { solicitanteId: req.user.id }
+            : {};
+
+        const [totalCount, pendingGestor, approvedNotPaid, rejected, totalPaidValue] = await Promise.all([
+            prisma.reimbursement.count({ where }),
+            prisma.reimbursement.count({ where: { ...where, status: 'ENVIADO' } }),
+            prisma.reimbursement.count({ where: { ...where, status: 'APROVADO' } }),
+            prisma.reimbursement.count({ where: { ...where, status: 'REJEITADO' } }),
+            prisma.reimbursement.aggregate({
+                where: { ...where, status: 'PAGO' },
+                _sum: { valor: true }
+            })
+        ]);
+
+        return res.status(200).json({
+            message: "Estatísticas calculadas com sucesso",
+            statusCode: 200,
+            data: {
+                totalCount,
+                pendingGestor,
+                approvedNotPaid,
+                rejected,
+                totalPaidValue: Number(totalPaidValue._sum.valor || 0)
+            }
+        });
+    } catch (error) {
+        next(error)
+    }
 }
