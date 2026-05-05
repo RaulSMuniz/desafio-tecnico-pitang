@@ -11,6 +11,8 @@
 !.dockerignore
 !docker-compose.yml
 
+!Postman Collection & Env/
+
 # Bloqueios específicos (O que NÃO deve ir mesmo dentro das pastas acima)
 **/node_modules/
 **/.env
