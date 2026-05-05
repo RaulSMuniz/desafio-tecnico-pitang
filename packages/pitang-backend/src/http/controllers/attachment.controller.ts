@@ -104,7 +104,7 @@ export async function getAttachmentById(req: Request, res: Response, next: NextF
 
         if (!isOwner && !isPrivileged) {
             return res.status(403).json({
-                message: "Acesso negado",
+                message: "Acesso negado: seu perfil não tem permissão para esta ação.",
                 statusCode: 403,
                 error: "Forbidden"
             });

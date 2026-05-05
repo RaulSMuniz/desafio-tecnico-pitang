@@ -14,7 +14,7 @@ attachmentRouter.use(ensureAuthenticated);
 
 attachmentRouter.post(
     "/reimbursements/:id/attachments",
-    roleRestrictedMiddleware([Role.COLABORADOR, Role.ADMIN]),
+    roleRestrictedMiddleware([Role.COLABORADOR]),
     postAttachmentSimulated
 );
 attachmentRouter.get(

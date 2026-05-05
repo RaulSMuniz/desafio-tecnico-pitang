@@ -11,7 +11,8 @@ export function roleRestrictedMiddleware(roles: string[]) {
 
             return response.status(403).json({
                 message: 'Acesso negado: seu perfil não tem permissão para esta ação.',
-                statusCode: 403
+                statusCode: 403,
+                error: 'Forbidden'
             });
         } catch (error) {
             return response.status(401).json({ message: 'Usuário não autenticado' });

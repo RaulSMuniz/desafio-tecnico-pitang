@@ -400,6 +400,13 @@ export async function submitReimbursement(req: Request, res: Response, next: Nex
             });
         }
 
+        if (reimbursement.solicitanteId !== req.user.id) {
+            return res.status(403).json({
+                message: "Você não tem permissão para enviar este reembolso",
+                statusCode: 403,
+                error: "Forbidden"
+            });
+        }
         if (reimbursement.status !== "RASCUNHO") {
             return res.status(400).json({
                 message: "Reembolso já foi enviado",
@@ -408,13 +415,7 @@ export async function submitReimbursement(req: Request, res: Response, next: Nex
             });
         }
 
-        if (reimbursement.solicitanteId !== req.user.id) {
-            return res.status(403).json({
-                message: "Você não tem permissão para enviar este reembolso",
-                statusCode: 403,
-                error: "Forbidden"
-            });
-        }
+
 
         await prisma.reimbursement.update({
             where: { id },
