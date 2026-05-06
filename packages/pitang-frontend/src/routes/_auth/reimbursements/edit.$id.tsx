@@ -19,8 +19,14 @@ import {
   SelectValue,
 } from "@/components/ui/select"
 import { editReimbursementSchema, attachmentSchema } from '@/zodSchemas'
+import { redirect } from '@tanstack/react-router'
 
 export const Route = createFileRoute('/_auth/reimbursements/edit/$id')({
+  beforeLoad: ({ context }) => {
+    if (context.auth.user?.perfil !== 'COLABORADOR') {
+      throw redirect({ to: '/reimbursements' })
+    }
+  },
   component: EditReimbursementPage,
 })
 
