@@ -93,8 +93,11 @@ npm install
 ```
 
 ### Passo 2: Crie o arquivo .env conforme as instruções de instalação via NPM acima.
+PS: certifique-se de colocar os dados do .env corretamente.
 
 ### Passo 3: Configure o banco de dados:
+Em `packages/pitang-backend`, execute os comandos do Prisma para preparar o banco e popular os dados iniciais:
+
 ```bash
 npx prisma migrate dev
 npx prisma generate
