@@ -11,7 +11,7 @@ describe('Attachment Management (List and Security Rules)', () => {
 
     beforeAll(async () => {
         const hashedSenha = await bcrypt.hash('12345678', 10);
-        
+
         // Criar usuários específicos para esta suíte para evitar poluição
         await prisma.user.upsert({
             where: { email: 'attach_colab@gmail.com' },
@@ -112,7 +112,7 @@ describe('Attachment Management (List and Security Rules)', () => {
                 .set('Authorization', `Bearer ${tokenOutroColaborador}`);
 
             expect(res.status).toBe(403);
-            expect(res.body.message).toBe('Acesso negado');
+            expect(res.body.message).toBe('Acesso negado: seu perfil não tem permissão para esta ação.');
         });
 
         it('should return 404 for a non-existent reimbursement ID', async () => {
