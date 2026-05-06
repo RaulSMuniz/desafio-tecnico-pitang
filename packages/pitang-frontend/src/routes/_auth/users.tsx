@@ -21,7 +21,7 @@ export const Route = createFileRoute('/_auth/users')({
   component: UsersManagement,
 })
 
-function UsersManagement() {
+export function UsersManagement() {
   const [users, setUsers] = useState<any[]>([])
   const [loading, setLoading] = useState(true)
   const [filter, setFilter] = useState<'ativos' | 'inativos'>('ativos')

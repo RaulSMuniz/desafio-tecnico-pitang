@@ -25,7 +25,7 @@ export const Route = createFileRoute('/_auth/categories')({
   component: CategoriesManagement,
 })
 
-function CategoriesManagement() {
+export function CategoriesManagement() {
   const [categories, setCategories] = useState<any[]>([])
   const [loading, setLoading] = useState(true)
   const [isModalOpen, setIsModalOpen] = useState(false)
