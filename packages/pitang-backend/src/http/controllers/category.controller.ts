@@ -101,14 +101,6 @@ export async function putCategory(req: Request, res: Response, next: NextFunctio
             });
         }
 
-        if (!categoryExists.ativo) {
-            return res.status(400).json({
-                message: "Categoria inativa",
-                statusCode: 400,
-                error: "Bad Request"
-            });
-        }
-
         const nameUsedByAnother = await prisma.category.findFirst({
             where: {
                 nome,
