@@ -8,6 +8,11 @@ import { Badge } from "@/components/ui/badge"
 import { Calendar, DollarSign, Tag, FileText, Download, Eye, ChevronLeft, ImageOff, History, User } from 'lucide-react'
 import { useState } from 'react'
 import dayjs from 'dayjs'
+import utc from 'dayjs/plugin/utc'
+import customParseFormat from 'dayjs/plugin/customParseFormat'
+
+dayjs.extend(utc)
+dayjs.extend(customParseFormat)
 
 interface ViewModalProps {
     isOpen: boolean
@@ -172,7 +177,7 @@ export function ViewReimbursementModal({ isOpen, onClose, data }: ViewModalProps
                                                                 {config.label}
                                                             </span>
                                                             <span className="text-[10px] text-slate-400 font-medium text-left">
-                                                                {step.criadoEm}
+                                                                {dayjs(step.criadoEm, 'DD/MM/YYYY HH:mm:ss').format('DD/MM/YYYY HH:mm')}
                                                             </span>
                                                         </div>
                                                         <p className="text-[11px] font-bold text-slate-700 text-left">
