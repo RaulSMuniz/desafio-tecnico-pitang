@@ -85,6 +85,23 @@ Utilize as credenciais abaixo para testar os diferentes perfis de acesso. **A se
 
 ## Testes
 
+Para rodar os testes, você deve utilizar o npm.
+
+### Passo 1: Na raiz do projeto, rode o comando:
+```bash
+npm install
+```
+
+### Passo 2: Crie o arquivo .env conforme as instruções de instalação via NPM acima.
+
+### Passo 3: Configure o banco de dados:
+```bash
+npx prisma migrate dev
+npx prisma generate
+npx prisma db seed
+```
+
+### Passo 4: Rode os testes conforme instruções abaixo:
 Para rodar os testes de ambos os pacotes individualmente:
 ```bash
 npm test
