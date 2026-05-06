@@ -7,6 +7,8 @@ describe('Audit History (Traceability Rules)', () => {
     let tokenColaborador: string;
     let tokenOutroColaborador: string;
     let tokenGestor: string;
+    let tokenFinanceiro: string;
+    let tokenAdmin: string;
     let reimbursementId: string;
 
     beforeAll(async () => {
@@ -25,15 +27,19 @@ describe('Audit History (Traceability Rules)', () => {
             create: { email: 'history_outro@gmail.com', nome: 'History Outro', senha: hashedSenha, perfil: 'COLABORADOR' }
         });
 
-        const [resColab, resOutro, resGestor] = await Promise.all([
+        const [resColab, resOutro, resGestor, resFinanceiro, resAdmin] = await Promise.all([
             request(app).post('/auth/login').send({ email: 'history_colab@gmail.com', senha: '12345678' }),
             request(app).post('/auth/login').send({ email: 'history_outro@gmail.com', senha: '12345678' }),
-            request(app).post('/auth/login').send({ email: 'gestor@gmail.com', senha: '12345678' })
+            request(app).post('/auth/login').send({ email: 'gestor@gmail.com', senha: '12345678' }),
+            request(app).post('/auth/login').send({ email: 'financeiro@gmail.com', senha: '12345678' }),
+            request(app).post('/auth/login').send({ email: 'admin@gmail.com', senha: '12345678' })
         ]);
 
         tokenColaborador = resColab.body.token;
         tokenOutroColaborador = resOutro.body.token;
         tokenGestor = resGestor.body.token;
+        tokenFinanceiro = resFinanceiro.body.token;
+        tokenAdmin = resAdmin.body.token;
 
         const cat = await prisma.category.findFirst({ where: { ativo: true } });
         const rb = await request(app)
@@ -93,19 +99,26 @@ describe('Audit History (Traceability Rules)', () => {
             expect(res.body.data[0].criadoEm).toMatch(/\d{2}\/\d{2}\/\d{4} \d{2}:\d{2}:\d{2}/);
         });
 
-        it('should forbid a colaborador from accessing history of another person\'s reimbursement', async () => {
-            const res = await request(app)
-                .get(`/history/${reimbursementId}`)
-                .set('Authorization', `Bearer ${tokenOutroColaborador}`);
-
-            expect(res.status).toBe(403);
-            expect(res.body.message).toContain('Acesso negado');
-        });
-
-        it('should allow gestor to access history of any reimbursement by ID', async () => {
+        it('should allow gestor to access history of a specific reimbursement', async () => {
             const res = await request(app)
                 .get(`/history/${reimbursementId}`)
                 .set('Authorization', `Bearer ${tokenGestor}`);
+
+            expect(res.status).toBe(200);
+        });
+
+        it('should allow financeiro to access history of a specific reimbursement', async () => {
+            const res = await request(app)
+                .get(`/history/${reimbursementId}`)
+                .set('Authorization', `Bearer ${tokenFinanceiro}`);
+
+            expect(res.status).toBe(200);
+        });
+
+        it('should allow admin to access history of any reimbursement by ID', async () => {
+            const res = await request(app)
+                .get(`/history/${reimbursementId}`)
+                .set('Authorization', `Bearer ${tokenAdmin}`);
 
             expect(res.status).toBe(200);
         });
@@ -116,6 +129,15 @@ describe('Audit History (Traceability Rules)', () => {
                 .set('Authorization', `Bearer ${tokenGestor}`);
 
             expect(res.status).toBe(400);
+        });
+
+        it('should forbid a colaborador from accessing history of another person\'s reimbursement', async () => {
+            const res = await request(app)
+                .get(`/history/${reimbursementId}`)
+                .set('Authorization', `Bearer ${tokenOutroColaborador}`);
+
+            expect(res.status).toBe(403);
+            expect(res.body.message).toContain('Acesso negado');
         });
     });
 });
