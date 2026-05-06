@@ -26,6 +26,8 @@ docker compose up --build
 
 Os containers estarão disponíveis em `http://localhost:80` (Frontend) e `http://localhost:3333` (Backend).
 
+**PS: Os testes são rodados exclusivamente via NPM.**
+
 ### Via npm:
 
 ### Passo 2: Instalar dependências
@@ -78,6 +80,21 @@ Utilize as credenciais abaixo para testar os diferentes perfis de acesso. **A se
 | **Gestor**     | `gestor@gmail.com` | Aprovar/Rejeitar solicitações de terceiros. |
 | **Financeiro** | `financeiro@gmail.com` | Marcar solicitações aprovadas como pagas. |
 | **Colaborador**| `colaborador@gmail.com` | Criar, editar (rascunho) e enviar solicitações. |
+
+---
+
+## Testes
+
+Para rodar os testes de ambos os pacotes individualmente:
+```bash
+npm test
+```
+No backend (`packages/pitang-backend`) e no frontend (`packages/pitang-frontend`).
+
+Ou, na raiz do projeto:
+```bash
+npm test
+```
 
 ---
 
@@ -138,7 +155,6 @@ Este projeto foi construído utilizando as tecnologias exigidas e sugeridas na e
 - [x] **Testes no frontend**: Testes cobrindo todos os fluxos relevantes.
 
 ### Diferenciais (Plus)
-- [x] **Segregação de Funções**: Gestores não podem aprovar suas próprias solicitações, caso tenha criado uma antes de ser promovido à gestor.
 - [x] **Bloqueio de Datas Futuras**: Validação no Zod para impedir despesas antecipadas.
 - [x] **Expiração de Sessão**: Monitoramento de validade do Token JWT.
 - [x] **Filtro por descrição do pedido, categoria e data**: Implementado para todas as listas de solicitações.
@@ -147,13 +163,3 @@ Este projeto foi construído utilizando as tecnologias exigidas e sugeridas na e
 - [x] **Paginação**: Paginação implementada no backend em relação as solicitações de reembolso. É consumida corretamente no frontend, tanto no dashboard total com métricas, quanto nas listas de solicitações de reembolso. 
 - [x] **Filtros**: Filtros de nome do colaborador, categoria, status e ordenação por data ou valor implementada nas solicitações de reembolso. Filtro de nome do colaborador ou e-mail do colaborador implementado no painel de usuários do Administrador.
 - [x] **Docker**: O projeto está dockerizado, permitindo fácil execução em qualquer ambiente.
-
----
-
-## Testes
-
-Para rodar os testes de ambos os pacotes individualmente:
-```bash
-npm test
-```
-No backend (`packages/pitang-backend`) e no frontend (`packages/pitang-frontend`).
