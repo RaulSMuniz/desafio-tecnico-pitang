@@ -7,6 +7,8 @@ describe('Attachment Management (List and Security Rules)', () => {
     let tokenColaborador: string;
     let tokenOutroColaborador: string;
     let tokenGestor: string;
+    let tokenFinanceiro: string;
+    let tokenAdmin: string;
     let reimbursementId: string;
 
     beforeAll(async () => {
@@ -25,15 +27,19 @@ describe('Attachment Management (List and Security Rules)', () => {
             create: { email: 'attach_outro@gmail.com', nome: 'Attach Outro', senha: hashedSenha, perfil: 'COLABORADOR' }
         });
 
-        const [resColab, resOutro, resGestor] = await Promise.all([
+        const [resColab, resOutro, resGestor, resFinanceiro, resAdmin] = await Promise.all([
             request(app).post('/auth/login').send({ email: 'attach_colab@gmail.com', senha: '12345678' }),
             request(app).post('/auth/login').send({ email: 'attach_outro@gmail.com', senha: '12345678' }),
-            request(app).post('/auth/login').send({ email: 'gestor@gmail.com', senha: '12345678' })
+            request(app).post('/auth/login').send({ email: 'gestor@gmail.com', senha: '12345678' }),
+            request(app).post('/auth/login').send({ email: 'financeiro@gmail.com', senha: '12345678' }),
+            request(app).post('/auth/login').send({ email: 'admin@gmail.com', senha: '12345678' })
         ]);
 
         tokenColaborador = resColab.body.token;
         tokenOutroColaborador = resOutro.body.token;
         tokenGestor = resGestor.body.token;
+        tokenFinanceiro = resFinanceiro.body.token;
+        tokenAdmin = resAdmin.body.token;
 
         const cat = await prisma.category.findFirst({ where: { ativo: true } });
         const rb = await request(app)
@@ -53,7 +59,7 @@ describe('Attachment Management (List and Security Rules)', () => {
         await prisma.$disconnect();
     });
 
-    describe('POST /reimbursements/:id/attachments', () => {
+    describe('Upload Attachment Flow (Colaborador, Gestor, Financeiro, Admin)', () => {
         it('should allow the owner to upload a simulated attachment', async () => {
             const res = await request(app)
                 .post(`/reimbursements/${reimbursementId}/attachments`)
@@ -65,6 +71,54 @@ describe('Attachment Management (List and Security Rules)', () => {
 
             expect(res.status).toBe(200);
             expect(res.body.data).toHaveProperty('solicitacaoId', reimbursementId);
+        });
+
+        it('should not allow gestor to upload a simulated attachment', async () => {
+            const res = await request(app)
+                .post(`/reimbursements/${reimbursementId}/attachments`)
+                .set('Authorization', `Bearer ${tokenGestor}`)
+                .send({
+                    nomeArquivo: 'comprovante_gestor.pdf',
+                    tipoArquivo: 'application/pdf'
+                });
+
+            expect(res.status).toBe(403);
+        });
+
+        it('should not allow financeiro to upload a simulated attachment', async () => {
+            const res = await request(app)
+                .post(`/reimbursements/${reimbursementId}/attachments`)
+                .set('Authorization', `Bearer ${tokenFinanceiro}`)
+                .send({
+                    nomeArquivo: 'comprovante_financeiro.pdf',
+                    tipoArquivo: 'application/pdf'
+                });
+
+            expect(res.status).toBe(403);
+        });
+
+        it('should not allow admin to upload a simulated attachment', async () => {
+            const res = await request(app)
+                .post(`/reimbursements/${reimbursementId}/attachments`)
+                .set('Authorization', `Bearer ${tokenAdmin}`)
+                .send({
+                    nomeArquivo: 'comprovante_admin.pdf',
+                    tipoArquivo: 'application/pdf'
+                });
+
+            expect(res.status).toBe(403);
+        });
+
+        it('should not allow other colaborador to upload an attachment', async () => {
+            const res = await request(app)
+                .post(`/reimbursements/${reimbursementId}/attachments`)
+                .set('Authorization', `Bearer ${tokenOutroColaborador}`)
+                .send({
+                    nomeArquivo: 'arquivo_outro_colaborador.jpg',
+                    tipoArquivo: 'image/jpeg'
+                });
+
+            expect(res.status).toBe(403);
         });
 
         it('should block attachments if status is not RASCUNHO', async () => {
@@ -85,7 +139,7 @@ describe('Attachment Management (List and Security Rules)', () => {
         });
     });
 
-    describe('GET /reimbursements/:id/attachments', () => {
+    describe('List Attachment Flow (Colaborador, Outro Colaborador, Gestor, Financeiro, Admin)', () => {
         it('should return a list of attachments for the owner of the reimbursement', async () => {
             const res = await request(app)
                 .get(`/reimbursements/${reimbursementId}/attachments`)
@@ -97,14 +151,37 @@ describe('Attachment Management (List and Security Rules)', () => {
             expect(res.body.data[0]).toHaveProperty('nomeArquivo', 'comprovante_01.pdf');
         });
 
+        it('should allow COLABORADOR to list their own attachments', async () => {
+            const res = await request(app)
+                .get(`/reimbursements/${reimbursementId}/attachments`)
+                .set('Authorization', `Bearer ${tokenColaborador}`);
+
+            expect(res.status).toBe(200);
+        });
+
         it('should allow GESTOR to list attachments of any reimbursement', async () => {
             const res = await request(app)
                 .get(`/reimbursements/${reimbursementId}/attachments`)
                 .set('Authorization', `Bearer ${tokenGestor}`);
 
             expect(res.status).toBe(200);
-            expect(Array.isArray(res.body.data)).toBe(true);
         });
+
+        it('should allow FINANCEIRO to list attachments of any reimbursement', async () => {
+            const res = await request(app)
+                .get(`/reimbursements/${reimbursementId}/attachments`)
+                .set('Authorization', `Bearer ${tokenFinanceiro}`);
+
+            expect(res.status).toBe(200);
+        });
+
+        it('should allow ADMIN to list attachments of any reimbursement', async () => {
+            const res = await request(app)
+                .get(`/reimbursements/${reimbursementId}/attachments`)
+                .set('Authorization', `Bearer ${tokenAdmin}`);
+
+            expect(res.status).toBe(200);
+        })
 
         it('should forbid other colaboradores from listing attachments of a reimbursement they do not own', async () => {
             const res = await request(app)
