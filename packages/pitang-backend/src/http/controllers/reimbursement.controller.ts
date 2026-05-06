@@ -5,6 +5,7 @@ import z from "zod";
 
 export async function getReimbursements(req: Request, res: Response, next: NextFunction) {
     try {
+        // Obtém os parâmetros da paginação
         const { data: pagination, error } = paginationQuery.safeParse(req.query);
 
         if (error) {
@@ -16,12 +17,17 @@ export async function getReimbursements(req: Request, res: Response, next: NextF
             });
         }
 
+        // Define o filtro de acordo com o perfil.
+        // Se for colaborador, mostra somente os seus reembolsos
+        // Se for gestor, financeiro ou admin, mostra todos os reembolsos.
         const where: any = req.user.perfil === 'COLABORADOR'
             ? { solicitanteId: req.user.id }
             : {};
 
         const { search, categoryId, date, status } = pagination;
 
+        // Filtra por status, caso um status válido seja informado.
+        // Se "all" for informado, não filtra, pois é o status padrão.
         if (status && status !== 'all') {
             const statusArray = String(status).split(',');
             if (statusArray.length > 1) {
@@ -31,6 +37,8 @@ export async function getReimbursements(req: Request, res: Response, next: NextF
             }
         }
 
+        // Filtra por busca, caso uma busca seja informada
+        // Busca na descrição e no nome do solicitante
         if (search) {
             where.OR = [
                 { descricao: { contains: search, mode: 'insensitive' } },
@@ -38,10 +46,13 @@ export async function getReimbursements(req: Request, res: Response, next: NextF
             ];
         }
 
+        // Filtra por categoria, caso uma categoria válida seja informada
         if (categoryId && categoryId !== 'all') {
             where.categoriaId = Number(categoryId);
         }
 
+        // Filtra por data, caso uma data válida seja informada
+        // A data é convertida para timestamp e comparada com o timestamp da data despesa
         if (date) {
             const start = new Date(date);
             const end = new Date(start);
@@ -53,6 +64,9 @@ export async function getReimbursements(req: Request, res: Response, next: NextF
             };
         }
 
+        // Define o campo de ordenação
+        // Se não for informado, ordena por data despesa (mais recente)
+        // Se for informado, ordena pelo campo informado
         let sortField: string;
         switch (pagination.sortBy) {
             case 'value': sortField = 'valor'; break;
@@ -62,6 +76,9 @@ export async function getReimbursements(req: Request, res: Response, next: NextF
             default: sortField = 'dataDespesa';
         }
 
+        // Executa a query no banco de dados
+        // Skip define quantos registros devem ser pulados, baseado na página e no tamanho da página
+        // Take define quantos registros devem ser retornados
         const [totalCount, reimbursementList] = await Promise.all([
             prisma.reimbursement.count({ where }),
             prisma.reimbursement.findMany({
@@ -70,7 +87,7 @@ export async function getReimbursements(req: Request, res: Response, next: NextF
                 take: pagination.pageSize,
                 orderBy: [
                     { [sortField]: pagination.sort },
-                    { criadoEm: 'desc' } // Tie-breaker para mostrar os mais recentes primeiro
+                    { criadoEm: 'desc' }
                 ],
                 include: {
                     categoria: true,
@@ -239,9 +256,11 @@ export async function getReimbursementById(req: Request, res: Response, next: Ne
             });
         }
 
+        // Verifica se o usuário é o proprietário do reembolso ou se tem permissão de gestor, financeiro ou admin
         const isOwner = reimbursement.solicitanteId === req.user.id;
         const isPrivileged = ['GESTOR', 'FINANCEIRO', 'ADMIN'].includes(req.user.perfil as string);
 
+        // Se o usuário não for proprietário e não tiver permissão, retorna 403
         if (!isOwner && !isPrivileged) {
             return res.status(403).json({
                 message: "Você não tem permissão para visualizar este reembolso",

@@ -14,7 +14,7 @@ describe('Attachment Management (List and Security Rules)', () => {
     beforeAll(async () => {
         const hashedSenha = await bcrypt.hash('12345678', 10);
 
-        // Criar usuários específicos para esta suíte para evitar poluição
+        // Cria os usuários para teste
         await prisma.user.upsert({
             where: { email: 'attach_colab@gmail.com' },
             update: { perfil: 'COLABORADOR', ativo: true, deletadoEm: null },

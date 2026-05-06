@@ -57,13 +57,14 @@ describe('CreateReimbursementPage', () => {
       await user.clear(valorInput);
       await user.type(valorInput, '50');
     }
-    
-    // Selecionar categoria
+
+    // Selecionar categoria e clicar no botão para fechar o combobox
     const categoryTrigger = screen.getByRole('combobox');
     await user.click(categoryTrigger);
     const categoryItem = await screen.findByText('Alimentação');
     await user.click(categoryItem);
 
+    // Clicar no botão de enviar
     const submitButton = screen.getByRole('button', { name: /criar solicitação/i });
     await user.click(submitButton);
 
@@ -105,7 +106,7 @@ describe('CreateReimbursementPage', () => {
     // Test future date
     const descInput = screen.getByPlaceholderText(/Jantar com cliente/i);
     await user.type(descInput, 'Almoço válido');
-    
+
     const valorInput = screen.getByText(/Valor/i).parentElement?.querySelector('input');
     if (valorInput) {
       await user.clear(valorInput);
@@ -116,7 +117,7 @@ describe('CreateReimbursementPage', () => {
     await user.click(categoryTrigger);
     const categoryItem = await screen.findByText('Alimentação');
     await user.click(categoryItem);
-    
+
     const dateLabel = screen.getByText(/Data da Despesa/i);
     const dateInput = dateLabel.parentElement?.querySelector('input');
     if (dateInput) {

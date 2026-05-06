@@ -5,9 +5,10 @@ import { prisma } from '../core/PrismaClient.js';
 describe('User Management (Admin CRUD Rules)', () => {
     let tokenAdmin: string;
     let userIdParaTeste: string;
-    // Gerando um e-mail único para evitar o erro 409 (Conflict) em execuções repetidas[cite: 10]
     const emailUnico = `admin_test_${Date.now()}@pitang.com`;
 
+
+    // Fazendo o login de administrador para poder acessar as rotas de gerenciamento
     beforeAll(async () => {
         const resAdmin = await request(app)
             .post('/auth/login')
