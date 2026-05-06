@@ -20,8 +20,8 @@ describe('User Management (Admin CRUD Rules)', () => {
         await prisma.$disconnect();
     });
 
-    describe('User CRUD Operations', () => {
-        it('should create a new user with UUID', async () => {
+    describe('Admin Flow - Create, Update', () => {
+        it('should allow admin to create a user', async () => {
             const res = await request(app)
                 .post('/users')
                 .set('Authorization', `Bearer ${tokenAdmin}`)
@@ -35,17 +35,17 @@ describe('User Management (Admin CRUD Rules)', () => {
             expect(res.status).toBe(201);
 
             const createdUser = await prisma.user.findUnique({ where: { email: emailUnico } });
-            userIdParaTeste = createdUser!.id; // ID no formato UUID[cite: 11]
+            userIdParaTeste = createdUser!.id;
         });
 
-        it('should update user information (providing name and email as required by schema)', async () => {
+        it('should allow admin to update user information', async () => {
             const res = await request(app)
                 .put(`/users/${userIdParaTeste}`)
                 .set('Authorization', `Bearer ${tokenAdmin}`)
                 .send({
-                    nome: 'Nome Atualizado', // Obrigatório no seu updateUserSchema
-                    email: emailUnico,      // Obrigatório no seu updateUserSchema[cite: 9]
-                    perfil: 'ADMIN'         // Opcional[cite: 9]
+                    nome: 'Nome Atualizado',
+                    email: emailUnico,
+                    perfil: 'ADMIN'
                 });
 
             expect(res.status).toBe(200);
@@ -55,8 +55,8 @@ describe('User Management (Admin CRUD Rules)', () => {
         });
     });
 
-    describe('Soft Delete and Recovery', () => {
-        it('should mark a user as deleted (status 200)', async () => {
+    describe('Admin Flow - Soft Delete and Recovery', () => {
+        it('should allow admin to soft delete users', async () => {
             const res = await request(app)
                 .delete(`/users/${userIdParaTeste}`)
                 .set('Authorization', `Bearer ${tokenAdmin}`);
@@ -67,7 +67,7 @@ describe('User Management (Admin CRUD Rules)', () => {
             expect(user?.deletadoEm).not.toBeNull();
         });
 
-        it('should restore a soft-deleted user (status 200)', async () => {
+        it('should allow admin to restore a soft-deleted user', async () => {
             const res = await request(app)
                 .patch(`/users/${userIdParaTeste}/restore`)
                 .set('Authorization', `Bearer ${tokenAdmin}`);
@@ -78,4 +78,163 @@ describe('User Management (Admin CRUD Rules)', () => {
             expect(user?.deletadoEm).toBeNull();
         });
     });
+
+    describe('Fail cases (Colaborador, Gestor, Financeiro)', () => {
+        let tokenColaborador: string;
+        let tokenGestor: string;
+        let tokenFinanceiro: string;
+
+        beforeAll(async () => {
+            const [resColab, resGestor, resFinanceiro] = await Promise.all([
+                request(app).post('/auth/login').send({ email: 'colaborador@gmail.com', senha: '12345678' }),
+                request(app).post('/auth/login').send({ email: 'gestor@gmail.com', senha: '12345678' }),
+                request(app).post('/auth/login').send({ email: 'financeiro@gmail.com', senha: '12345678' })
+            ]);
+
+            tokenColaborador = resColab.body.token;
+            tokenGestor = resGestor.body.token;
+            tokenFinanceiro = resFinanceiro.body.token;
+        });
+
+        // Colaborador fail case, should not be able to create a user
+        it('should return 403 for a collaborator trying to create a user', async () => {
+            const res = await request(app)
+                .post('/users')
+                .set('Authorization', `Bearer ${tokenColaborador}`)
+                .send({
+                    nome: 'Novo Usuario Teste',
+                    email: emailUnico,
+                    senha: 'senha_segura_123',
+                    perfil: 'GESTOR'
+                });
+
+            expect(res.status).toBe(403);
+        });
+
+        // Colaborador fail case, should not be able to update a user
+        it('should return 403 for a collaborator trying to update a user', async () => {
+            const res = await request(app)
+                .put(`/users/${userIdParaTeste}`)
+                .set('Authorization', `Bearer ${tokenColaborador}`)
+                .send({
+                    nome: 'Nome Atualizado',
+                    email: emailUnico,
+                    perfil: 'ADMIN'
+                });
+
+            expect(res.status).toBe(403);
+        });
+
+        // Colaborador fail case, should not be able to delete a user
+        it('should return 403 for a collaborator trying to delete a user', async () => {
+            const res = await request(app)
+                .delete(`/users/${userIdParaTeste}`)
+                .set('Authorization', `Bearer ${tokenColaborador}`);
+
+            expect(res.status).toBe(403);
+        });
+
+        // Colaborador fail case, should not be able to restore a user
+        it('should return 403 for a collaborator trying to restore a user', async () => {
+            const res = await request(app)
+                .patch(`/users/${userIdParaTeste}/restore`)
+                .set('Authorization', `Bearer ${tokenColaborador}`);
+
+            expect(res.status).toBe(403);
+        });
+
+        // Gestor fail case, should not be able to create a user
+        it('should return 403 for a gestor trying to create a user', async () => {
+            const res = await request(app)
+                .post('/users')
+                .set('Authorization', `Bearer ${tokenGestor}`)
+                .send({
+                    nome: 'Novo Usuario Teste',
+                    email: emailUnico,
+                    senha: 'senha_segura_123',
+                    perfil: 'GESTOR'
+                });
+
+            expect(res.status).toBe(403);
+        });
+
+        // Gestor fail case, should not be able to update a user
+        it('should return 403 for a gestor trying to update a user', async () => {
+            const res = await request(app)
+                .put(`/users/${userIdParaTeste}`)
+                .set('Authorization', `Bearer ${tokenGestor}`)
+                .send({
+                    nome: 'Nome Atualizado',
+                    email: emailUnico,
+                    perfil: 'ADMIN'
+                });
+
+            expect(res.status).toBe(403);
+        });
+
+        // Gestor fail case, should not be able to delete a user
+        it('should return 403 for a gestor trying to delete a user', async () => {
+            const res = await request(app)
+                .delete(`/users/${userIdParaTeste}`)
+                .set('Authorization', `Bearer ${tokenGestor}`);
+
+            expect(res.status).toBe(403);
+        });
+
+        // Gestor fail case, should not be able to restore a user
+        it('should return 403 for a gestor trying to restore a user', async () => {
+            const res = await request(app)
+                .patch(`/users/${userIdParaTeste}/restore`)
+                .set('Authorization', `Bearer ${tokenGestor}`);
+
+            expect(res.status).toBe(403);
+        });
+
+        // Financeiro fail case, should not be able to create a user
+        it('should return 403 for a financeiro trying to create a user', async () => {
+            const res = await request(app)
+                .post('/users')
+                .set('Authorization', `Bearer ${tokenFinanceiro}`)
+                .send({
+                    nome: 'Novo Usuario Teste',
+                    email: emailUnico,
+                    senha: 'senha_segura_123',
+                    perfil: 'GESTOR'
+                });
+
+            expect(res.status).toBe(403);
+        });
+
+        // Financeiro fail case, should not be able to update a user
+        it('should return 403 for a financeiro trying to update a user', async () => {
+            const res = await request(app)
+                .put(`/users/${userIdParaTeste}`)
+                .set('Authorization', `Bearer ${tokenFinanceiro}`)
+                .send({
+                    nome: 'Nome Atualizado',
+                    email: emailUnico,
+                    perfil: 'ADMIN'
+                });
+
+            expect(res.status).toBe(403);
+        });
+
+        // Financeiro fail case, should not be able to delete a user
+        it('should return 403 for a financeiro trying to delete a user', async () => {
+            const res = await request(app)
+                .delete(`/users/${userIdParaTeste}`)
+                .set('Authorization', `Bearer ${tokenFinanceiro}`);
+
+            expect(res.status).toBe(403);
+        });
+
+        // Financeiro fail case, should not be able to restore a user
+        it('should return 403 for a financeiro trying to restore a user', async () => {
+            const res = await request(app)
+                .patch(`/users/${userIdParaTeste}/restore`)
+                .set('Authorization', `Bearer ${tokenFinanceiro}`);
+
+            expect(res.status).toBe(403);
+        });
+    })
 });
