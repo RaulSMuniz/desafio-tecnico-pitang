@@ -20,13 +20,19 @@ cd desafio-tecnico-pitang
 ```
 
 ### Via Docker
+A forma mais rápida de subir o sistema completo (Frontend, Backend e Banco de Dados):
+
 ```bash
 docker compose up --build
 ```
 
 Os containers estarão disponíveis em `http://localhost:80` (Frontend) e `http://localhost:3333` (Backend).
 
-**PS: Os testes são rodados exclusivamente via NPM.**
+#### Rodando Testes via Docker
+Você pode rodar toda a suíte de testes (Frontend e Backend) dentro de containers isolados, sem precisar instalar dependências localmente:
+
+- **Windows**: No terminal, execute `.\testes-docker.bat`
+- **Linux/Mac**: No terminal, execute `./testes-docker.sh`
 
 ### Via npm:
 
@@ -42,7 +48,7 @@ npm install
 
 ```env
 # URL de conexão com o banco (Exemplo para Postgres local ou Docker)
-DATABASE_URL="postgresql://postgres:SENHA@localhost:5432/NOMEDATABASE?schema=public""
+DATABASE_URL="postgresql://postgres:SENHA@localhost:5432/NOMEDATABASE?schema=public"
 
 # Configurações do Servidor
 HTTP_PORT=3333
@@ -104,17 +110,15 @@ npx prisma generate
 npx prisma db seed
 ```
 
-### Passo 4: Rode os testes conforme instruções abaixo:
-Para rodar os testes de ambos os pacotes individualmente:
+### Rodando os Testes
+Para rodar os testes de ambos os pacotes simultaneamente a partir da raiz:
 ```bash
 npm test
 ```
-No backend (`packages/pitang-backend`) e no frontend (`packages/pitang-frontend`).
 
-Ou, na raiz do projeto:
-```bash
-npm test
-```
+Ou individualmente em cada pasta:
+- No backend: `cd packages/pitang-backend && npm test`
+- No frontend: `cd packages/pitang-frontend && npm test`
 
 ---
 
