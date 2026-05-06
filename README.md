@@ -21,7 +21,7 @@ cd desafio-tecnico-pitang
 
 ### Via Docker
 ```bash
-docker compose up -d
+docker compose up --build
 ```
 
 Os containers estarão disponíveis em `http://localhost:80` (Frontend) e `http://localhost:3333` (Backend).
