@@ -26,6 +26,18 @@ A forma mais rápida de subir o sistema completo (Frontend, Backend e Banco de D
 docker compose up --build
 ```
 
+**Caso seu computador tenha recursos limitados:**
+
+**Windows:**
+```bash
+set "COMPOSE_PARALLEL_LIMIT=1" && docker compose up --build
+```
+
+**Linux/Mac:**
+```bash
+COMPOSE_PARALLEL_LIMIT=1 docker compose up --build
+```
+
 Os containers estarão disponíveis em `http://localhost:80` (Frontend) e `http://localhost:3333` (Backend).
 
 #### Rodando Testes via Docker
