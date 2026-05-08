@@ -495,7 +495,7 @@ export async function cancelReimbursement(req: Request, res: Response, next: Nex
             });
         }
 
-        const statusPermitidos = ["RASCUNHO", "ENVIADO"];
+        const statusPermitidos = ["RASCUNHO"];
         if (!statusPermitidos.includes(reimbursement.status)) {
             return res.status(400).json({
                 message: "Status não permite cancelamento",
