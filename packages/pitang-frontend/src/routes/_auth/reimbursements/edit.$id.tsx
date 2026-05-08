@@ -38,6 +38,11 @@ export function EditReimbursementPage() {
     fetcher.get(url).then(res => res.data?.data || res.data || res)
   )
 
+  if (!loadingReimb && reimbursement && reimbursement?.status !== "RASCUNHO") {
+    navigate({ to: '/reimbursements' })
+    return null
+  }
+
   const { data: categoriesData, isLoading: loadingCats } = useSWR('/categories', (url) =>
     fetcher.get(url).then(res => res.data?.data || res.data || [])
   )
