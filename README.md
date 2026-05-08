@@ -25,12 +25,20 @@ A forma mais rápida de subir o sistema completo (Frontend, Backend e Banco de D
 ```bash
 docker compose up --build
 ```
+OU
+```bash
+docker compose up -d --build
+```
 
 **Caso seu computador tenha recursos limitados:**
 
 **Windows:**
 ```bash
 set "COMPOSE_PARALLEL_LIMIT=1" && docker compose up --build
+```
+OU
+```powershell
+$env:COMPOSE_PARALLEL_LIMIT=1; docker compose up --build
 ```
 
 **Linux/Mac:**
