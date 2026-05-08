@@ -43,7 +43,7 @@ export const attachmentSchema = z.object({
 })
 
 export const paramId = z.object({
-    id: z.uuid("ID de reembolso inválido"),
+    id: z.uuid("ID inválido"),
 })
 
 export const numberId = z.object({
