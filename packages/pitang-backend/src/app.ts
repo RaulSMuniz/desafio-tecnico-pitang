@@ -19,7 +19,16 @@ app.get("/health", (req, res) => {
 app.use(express.json());
 
 app.use(cors({
-    origin: "*",
+    // Em produção, eu trocaria as origens pro domínio em si.
+    // Ex: reembolsos-pitang.com.br, etc.
+    origin: [
+        "http://localhost:5173",
+        "http://localhost:80",
+        "http://localhost",
+        "http://127.0.0.1:5173",
+        "http://127.0.0.1:80",
+        "http://127.0.0.1"
+    ],
     methods: ["GET", "POST", "PUT", "DELETE", "PATCH"],
     allowedHeaders: ["Content-Type", "Authorization"],
 }));
