@@ -50,14 +50,6 @@ export const numberId = z.object({
     id: z.coerce.number().positive("ID inválido"),
 })
 
-export const historySchema = z.object({
-    solicitacaoId: z.uuid("ID de reembolso inválido"),
-    observacao: z.string(),
-    criadoEm: z.coerce.date(),
-    acao: z.enum(["RASCUNHO", "ENVIADO", "APROVADO", "PAGO", "REJEITADO", "CANCELADO"]),
-    usuarioId: z.uuid("ID de usuário inválido"),
-})
-
 export const userSearchSchema = z.object({
     search: z.string().optional().default(""),
 })
