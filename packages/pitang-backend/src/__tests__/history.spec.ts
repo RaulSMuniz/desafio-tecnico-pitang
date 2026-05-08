@@ -4,11 +4,11 @@ import { prisma } from '../core/PrismaClient.js';
 import bcrypt from 'bcrypt';
 
 describe('Audit History (Traceability Rules)', () => {
-    let tokenColaborador: string;
-    let tokenOutroColaborador: string;
-    let tokenGestor: string;
-    let tokenFinanceiro: string;
-    let tokenAdmin: string;
+    let tokenColaborador = '';
+    let tokenOutroColaborador = '';
+    let tokenGestor = '';
+    let tokenFinanceiro = '';
+    let tokenAdmin = '';
     let reimbursementId: string;
 
     beforeAll(async () => {
@@ -35,16 +35,22 @@ describe('Audit History (Traceability Rules)', () => {
             request(app).post('/auth/login').send({ email: 'admin@gmail.com', senha: '12345678' })
         ]);
 
-        tokenColaborador = resColab.body.token;
-        tokenOutroColaborador = resOutro.body.token;
-        tokenGestor = resGestor.body.token;
-        tokenFinanceiro = resFinanceiro.body.token;
-        tokenAdmin = resAdmin.body.token;
+        const getCookie = (res: any) => {
+            const cookies = res.header['set-cookie'];
+            if (!cookies || !cookies[0]) return '';
+            return cookies[0].split(';')[0].split('=')[1] || '';
+        };
+
+        tokenColaborador = getCookie(resColab);
+        tokenOutroColaborador = getCookie(resOutro);
+        tokenGestor = getCookie(resGestor);
+        tokenFinanceiro = getCookie(resFinanceiro);
+        tokenAdmin = getCookie(resAdmin);
 
         const cat = await prisma.category.findFirst({ where: { ativo: true } });
         const rb = await request(app)
             .post('/reimbursements')
-            .set('Authorization', `Bearer ${tokenColaborador}`)
+            .set('Cookie', [`pitang_token=${tokenColaborador}`])
             .send({
                 descricao: 'Solicitação para Teste de Histórico',
                 valor: 150.00,
@@ -63,7 +69,7 @@ describe('Audit History (Traceability Rules)', () => {
         it('should allow a colaborador to see only their own history records', async () => {
             const res = await request(app)
                 .get('/history')
-                .set('Authorization', `Bearer ${tokenColaborador}`);
+                .set('Cookie', [`pitang_token=${tokenColaborador}`]);
 
             expect(res.status).toBe(200);
             expect(Array.isArray(res.body.data)).toBe(true);
@@ -81,7 +87,7 @@ describe('Audit History (Traceability Rules)', () => {
         it('should allow a gestor to see all history records', async () => {
             const res = await request(app)
                 .get('/history')
-                .set('Authorization', `Bearer ${tokenGestor}`);
+                .set('Cookie', [`pitang_token=${tokenGestor}`]);
 
             expect(res.status).toBe(200);
             expect(res.body.data.length).toBeGreaterThanOrEqual(1);
@@ -92,7 +98,7 @@ describe('Audit History (Traceability Rules)', () => {
         it('should allow the owner to access history of a specific reimbursement', async () => {
             const res = await request(app)
                 .get(`/history/${reimbursementId}`)
-                .set('Authorization', `Bearer ${tokenColaborador}`);
+                .set('Cookie', [`pitang_token=${tokenColaborador}`]);
 
             expect(res.status).toBe(200);
             expect(res.body.data[0]).toHaveProperty('criadoEm');
@@ -102,7 +108,7 @@ describe('Audit History (Traceability Rules)', () => {
         it('should allow gestor to access history of a specific reimbursement', async () => {
             const res = await request(app)
                 .get(`/history/${reimbursementId}`)
-                .set('Authorization', `Bearer ${tokenGestor}`);
+                .set('Cookie', [`pitang_token=${tokenGestor}`]);
 
             expect(res.status).toBe(200);
         });
@@ -110,7 +116,7 @@ describe('Audit History (Traceability Rules)', () => {
         it('should allow financeiro to access history of a specific reimbursement', async () => {
             const res = await request(app)
                 .get(`/history/${reimbursementId}`)
-                .set('Authorization', `Bearer ${tokenFinanceiro}`);
+                .set('Cookie', [`pitang_token=${tokenFinanceiro}`]);
 
             expect(res.status).toBe(200);
         });
@@ -118,7 +124,7 @@ describe('Audit History (Traceability Rules)', () => {
         it('should allow admin to access history of any reimbursement by ID', async () => {
             const res = await request(app)
                 .get(`/history/${reimbursementId}`)
-                .set('Authorization', `Bearer ${tokenAdmin}`);
+                .set('Cookie', [`pitang_token=${tokenAdmin}`]);
 
             expect(res.status).toBe(200);
         });
@@ -126,7 +132,7 @@ describe('Audit History (Traceability Rules)', () => {
         it('should return 404 for an invalid reimbursement ID', async () => {
             const res = await request(app)
                 .get('/history/999999')
-                .set('Authorization', `Bearer ${tokenGestor}`);
+                .set('Cookie', [`pitang_token=${tokenGestor}`]);
 
             expect(res.status).toBe(400);
         });
@@ -134,7 +140,7 @@ describe('Audit History (Traceability Rules)', () => {
         it('should forbid a colaborador from accessing history of another person\'s reimbursement', async () => {
             const res = await request(app)
                 .get(`/history/${reimbursementId}`)
-                .set('Authorization', `Bearer ${tokenOutroColaborador}`);
+                .set('Cookie', [`pitang_token=${tokenOutroColaborador}`]);
 
             expect(res.status).toBe(403);
             expect(res.body.message).toContain('Acesso negado');

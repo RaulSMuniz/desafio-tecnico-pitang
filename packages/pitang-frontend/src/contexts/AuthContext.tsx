@@ -1,6 +1,5 @@
-import React, { createContext, useState, useEffect, useCallback } from 'react';
+import React, { createContext, useState, useEffect } from 'react';
 import type { ReactNode } from 'react';
-import dayjs from 'dayjs';
 import useSWR from 'swr';
 import fetcher from '../api/fetcher';
 
@@ -25,26 +24,17 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     const [user, setUser] = useState<User | null>(null);
     const [loading, setLoading] = useState<boolean>(true);
 
-    const getCookieToken = useCallback((): string | null => {
-        return document.cookie
-            .split(';')
-            .find((c) => c.trim().startsWith('@pitang/accessToken='))
-            ?.split('=')[1] || null;
-    }, [])
-
     useEffect(() => {
         const storagedUser = localStorage.getItem('@pitang/user');
-        const token = getCookieToken();
 
-        if (storagedUser && token) {
+        if (storagedUser) {
             setUser(JSON.parse(storagedUser));
         } else {
-            localStorage.removeItem('@pitang/user');
             setUser(null);
         }
 
         setLoading(false)
-    }, [getCookieToken]);
+    }, []);
 
     const { data: swrUser } = useSWR(
         (user && !loading) ? '/auth/me' : null,
@@ -69,41 +59,17 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         }
     }, [swrUser, user]);
 
-    useEffect(() => {
-        const checkExpiration = () => {
-            const token = getCookieToken();
-            if (!token) return;
 
-            try {
-                const payload = JSON.parse(atob(token.split('.')[1]));
-                const exp = payload.exp * 1000;
-
-                if (Date.now() >= exp) {
-                    signOut('expired');
-                }
-            } catch (e) {
-                // Token inválido ou corrompido, ignoramos para o signOut reativo tratar se necessário
-            }
-        };
-
-        const interval = setInterval(checkExpiration, 10000); // Checa a cada 10 segundos
-        return () => clearInterval(interval);
-    }, [getCookieToken]);
 
     const signIn = async (credentials: object) => {
         try {
             setLoading(true);
             const response = await fetcher.post('/auth/login', credentials);
 
-            const { user: userData, token } = response.data || response;
-
-            if (!token) throw new Error("Token não recebido");
+            const { user: userData } = response.data || response;
 
             setUser(userData);
             localStorage.setItem('@pitang/user', JSON.stringify(userData));
-
-            const expires = dayjs().add(1, 'hour').toDate().toUTCString();
-            document.cookie = `@pitang/accessToken=${token}; path=/; expires=${expires}; SameSite=Lax`;
         } catch (error: any) {
             console.error("Erro ao processar login no front:", error);
             throw error;
@@ -112,11 +78,16 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         }
     };
 
-    const signOut = (reason?: string) => {
-        document.cookie = "@pitang/accessToken=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT";
-        localStorage.removeItem('@pitang/user');
-        setUser(null);
-        window.location.href = reason ? `/login?reason=${reason}` : '/login';
+    const signOut = async (reason?: string) => {
+        try {
+            await fetcher.post('/auth/logout');
+        } catch (error) {
+            console.error("Erro ao fazer logout no servidor:", error);
+        } finally {
+            localStorage.removeItem('@pitang/user');
+            setUser(null);
+            window.location.href = reason ? `/login?reason=${reason}` : '/login';
+        }
     };
 
     return (

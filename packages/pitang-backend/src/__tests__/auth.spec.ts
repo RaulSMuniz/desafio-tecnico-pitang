@@ -12,8 +12,10 @@ describe('Auth Flow', () => {
             });
 
         expect(response.status).toBe(200);
-        expect(response.body).toHaveProperty('token');
         expect(response.body.user.email).toBe('colaborador@gmail.com');
+        const setCookie = (response as any).header['set-cookie'];
+        expect(setCookie).toBeDefined();
+        expect(setCookie[0]).toMatch(/^pitang_token=/);
     });
 
     it('should return 401 for invalid credentials (wrong password)', async () => {
@@ -69,7 +71,7 @@ describe('Auth Flow', () => {
     it('should return 401 for a malformed or forged JWT token', async () => {
         const response = await request(app)
             .get('/reimbursements')
-            .set('Authorization', 'Bearer invalid_token');
+            .set('Cookie', ['pitang_token=invalid_token']);
 
         expect(response.status).toBe(401);
     });

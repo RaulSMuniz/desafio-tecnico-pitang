@@ -2,6 +2,7 @@ import express from "express";
 import morgan from 'morgan';
 import cors from "cors";
 import helmet from "helmet";
+import cookieParser from "cookie-parser";
 import { errorFallbackMiddleware } from "./http/middlewares/error.fallback.middleware.js";
 import userRouter from "./http/routes/user.routes.js";
 import categoryRouter from "./http/routes/category.routes.js";
@@ -17,6 +18,7 @@ app.get("/health", (req, res) => {
 });
 
 app.use(express.json());
+app.use(cookieParser());
 
 app.use(cors({
     // Em produção, eu trocaria as origens pro domínio em si.
@@ -29,6 +31,7 @@ app.use(cors({
         "http://127.0.0.1:80",
         "http://127.0.0.1"
     ],
+    credentials: true,
     methods: ["GET", "POST", "PUT", "DELETE", "PATCH"],
     allowedHeaders: ["Content-Type", "Authorization"],
 }));

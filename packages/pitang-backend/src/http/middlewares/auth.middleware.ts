@@ -4,17 +4,15 @@ import { env } from "../../core/EnvVars.js";
 import { prisma } from "../../core/PrismaClient.js";
 
 export async function ensureAuthenticated(req: Request, res: Response, next: NextFunction) {
-    const authHeader = req.headers.authorization;
+    const token = req.cookies['pitang_token'];
 
-    if (!authHeader) {
+    if (!token) {
         return res.status(401).json({
             message: "Token de autorização ausente",
             statusCode: 401,
             error: "Unauthorized"
         });
     }
-
-    const [, token] = authHeader.split(" ");
 
     try {
         const decoded = jsonwebtoken.verify(token || "", env.JWT_SECRET) as { sub: string, perfil: string };

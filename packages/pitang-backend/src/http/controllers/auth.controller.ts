@@ -64,14 +64,20 @@ export async function login(req: Request, res: Response, next: NextFunction) {
             }
         );
 
+        res.cookie('pitang_token', token, {
+            httpOnly: true,
+            secure: process.env.NODE_ENV === 'production',
+            sameSite: 'lax',
+            maxAge: 3600000 // 1h
+        });
+
         return res.status(200).json({
             user: {
                 id: user.id,
                 nome: user.nome,
                 email: user.email,
                 perfil: user.perfil
-            },
-            token
+            }
         });
 
     } catch (error) {
@@ -125,4 +131,16 @@ export async function getMe(req: Request, res: Response, next: NextFunction) {
     } catch (error) {
         next(error);
     }
+}
+
+/**
+ * POST /auth/logout
+ */
+export async function logout(req: Request, res: Response) {
+    res.clearCookie('pitang_token', {
+        httpOnly: true,
+        secure: process.env.NODE_ENV === 'production',
+        sameSite: 'lax'
+    });
+    return res.status(200).json({ message: "Logout realizado com sucesso" });
 }

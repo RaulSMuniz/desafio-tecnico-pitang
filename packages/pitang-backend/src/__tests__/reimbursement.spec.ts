@@ -4,11 +4,11 @@ import { prisma } from '../core/PrismaClient.js';
 import bcrypt from 'bcryptjs';
 
 describe('Reimbursement Flow (Business Rules)', () => {
-    let tokenColaborador: string;
-    let tokenColaborador2: string;
-    let tokenGestor: string;
-    let tokenFinanceiro: string;
-    let tokenAdmin: string;
+    let tokenColaborador = '';
+    let tokenColaborador2 = '';
+    let tokenGestor = '';
+    let tokenFinanceiro = '';
+    let tokenAdmin = '';
     let categoriaId: number;
     let categoriaInativaId: number;
     let reimbursementId: string;
@@ -70,11 +70,17 @@ describe('Reimbursement Flow (Business Rules)', () => {
             request(app).post('/auth/login').send({ email: 'admin_test@gmail.com', senha: '12345678' })
         ]);
 
-        tokenColaborador = resColab.body.token;
-        tokenColaborador2 = resColab2.body.token;
-        tokenGestor = resGestor.body.token;
-        tokenFinanceiro = resFin.body.token;
-        tokenAdmin = resAdmin.body.token;
+        const getCookie = (res: any) => {
+            const cookies = res.header['set-cookie'];
+            if (!cookies || !cookies[0]) return '';
+            return cookies[0].split(';')[0].split('=')[1] || '';
+        };
+
+        tokenColaborador = getCookie(resColab);
+        tokenColaborador2 = getCookie(resColab2);
+        tokenGestor = getCookie(resGestor);
+        tokenFinanceiro = getCookie(resFin);
+        tokenAdmin = getCookie(resAdmin);
     });
 
     afterAll(async () => {
@@ -85,7 +91,7 @@ describe('Reimbursement Flow (Business Rules)', () => {
         beforeEach(async () => {
             const res = await request(app)
                 .post('/reimbursements')
-                .set('Authorization', `Bearer ${tokenColaborador}`)
+                .set('Cookie', [`pitang_token=${tokenColaborador}`])
                 .send({
                     descricao: 'Teste de Fluxo',
                     valor: 100,
@@ -100,7 +106,7 @@ describe('Reimbursement Flow (Business Rules)', () => {
         it('should create a reimbursement as RASCUNHO and record history', async () => {
             const response = await request(app)
                 .post('/reimbursements')
-                .set('Authorization', `Bearer ${tokenColaborador}`)
+                .set('Cookie', [`pitang_token=${tokenColaborador}`])
                 .send({
                     descricao: 'Almoço com cliente',
                     valor: 45.00,
@@ -122,7 +128,7 @@ describe('Reimbursement Flow (Business Rules)', () => {
         it('should allow a collaborator to edit their own RASCUNHO', async () => {
             const res = await request(app)
                 .put(`/reimbursements/${reimbursementId}`)
-                .set('Authorization', `Bearer ${tokenColaborador}`)
+                .set('Cookie', [`pitang_token=${tokenColaborador}`])
                 .send({
                     descricao: 'Editado',
                     valor: 100,
@@ -137,7 +143,7 @@ describe('Reimbursement Flow (Business Rules)', () => {
         it('should allow a collaborator to cancel their own RASCUNHO', async () => {
             const res = await request(app)
                 .post(`/reimbursements/${reimbursementId}/cancel`)
-                .set('Authorization', `Bearer ${tokenColaborador}`);
+                .set('Cookie', [`pitang_token=${tokenColaborador}`]);
 
             expect(res.status).toBe(200);
         });
@@ -146,7 +152,7 @@ describe('Reimbursement Flow (Business Rules)', () => {
         it('should allow a collaborator to submit their own RASCUNHO', async () => {
             const resCreate = await request(app)
                 .post('/reimbursements')
-                .set('Authorization', `Bearer ${tokenColaborador}`)
+                .set('Cookie', [`pitang_token=${tokenColaborador}`])
                 .send({
                     descricao: 'Teste de Fluxo',
                     valor: 100,
@@ -160,7 +166,7 @@ describe('Reimbursement Flow (Business Rules)', () => {
 
             const resSubmit = await request(app)
                 .post(`/reimbursements/${reimbursementIdCreate}/submit`)
-                .set('Authorization', `Bearer ${tokenColaborador}`);
+                .set('Cookie', [`pitang_token=${tokenColaborador}`]);
 
             expect(resSubmit.status).toBe(200);
         });
@@ -169,7 +175,7 @@ describe('Reimbursement Flow (Business Rules)', () => {
         it('should allow a collaborator to list his reimbursements', async () => {
             const res = await request(app)
                 .get(`/reimbursements`)
-                .set('Authorization', `Bearer ${tokenColaborador}`);
+                .set('Cookie', [`pitang_token=${tokenColaborador}`]);
 
             expect(res.status).toBe(200);
         });
@@ -178,7 +184,7 @@ describe('Reimbursement Flow (Business Rules)', () => {
         it('should return 400 if valor is zero or negative', async () => {
             const response = await request(app)
                 .post('/reimbursements')
-                .set('Authorization', `Bearer ${tokenColaborador}`)
+                .set('Cookie', [`pitang_token=${tokenColaborador}`])
                 .send({
                     descricao: 'Valor inválido',
                     valor: 0,
@@ -193,7 +199,7 @@ describe('Reimbursement Flow (Business Rules)', () => {
         it('should return 400 if category is inactive', async () => {
             const response = await request(app)
                 .post('/reimbursements')
-                .set('Authorization', `Bearer ${tokenColaborador}`)
+                .set('Cookie', [`pitang_token=${tokenColaborador}`])
                 .send({
                     descricao: 'Categoria Inativa',
                     valor: 50,
@@ -208,18 +214,18 @@ describe('Reimbursement Flow (Business Rules)', () => {
         it('should restrict colaborador from accessing someone else\'s reimbursement detail', async () => {
             const res = await request(app)
                 .get(`/reimbursements/${reimbursementId}`)
-                .set('Authorization', `Bearer ${tokenColaborador2}`);
+                .set('Cookie', [`pitang_token=${tokenColaborador2}`]);
 
             expect(res.status).toBe(403);
         });
 
         // Colaborador test case, colaborador trying to edit a reimbursement that is not in RASCUNHO status
         it('should block editing if status is not RASCUNHO', async () => {
-            await request(app).post(`/reimbursements/${reimbursementId}/submit`).set('Authorization', `Bearer ${tokenColaborador}`);
+            await request(app).post(`/reimbursements/${reimbursementId}/submit`).set('Cookie', [`pitang_token=${tokenColaborador}`]);
 
             const res = await request(app)
                 .put(`/reimbursements/${reimbursementId}`)
-                .set('Authorization', `Bearer ${tokenColaborador}`)
+                .set('Cookie', [`pitang_token=${tokenColaborador}`])
                 .send({
                     descricao: 'Tentativa de alteração',
                     valor: 120,
@@ -237,7 +243,7 @@ describe('Reimbursement Flow (Business Rules)', () => {
 
             const res = await request(app)
                 .post('/reimbursements')
-                .set('Authorization', `Bearer ${tokenColaborador}`)
+                .set('Cookie', [`pitang_token=${tokenColaborador}`])
                 .send({
                     descricao: 'Viagem Futura',
                     valor: 500,
@@ -252,7 +258,7 @@ describe('Reimbursement Flow (Business Rules)', () => {
         it('should return 403 when a collaborator tries to pay a reimbursement', async () => {
             const res = await request(app)
                 .post(`/reimbursements/${reimbursementId}/pay`)
-                .set('Authorization', `Bearer ${tokenColaborador}`);
+                .set('Cookie', [`pitang_token=${tokenColaborador}`]);
 
             expect(res.status).toBe(403);
         });
@@ -261,7 +267,7 @@ describe('Reimbursement Flow (Business Rules)', () => {
         it('should return 403 when a collaborator tries to approve a reimbursement', async () => {
             const res = await request(app)
                 .post(`/reimbursements/${reimbursementId}/approve`)
-                .set('Authorization', `Bearer ${tokenColaborador}`);
+                .set('Cookie', [`pitang_token=${tokenColaborador}`]);
 
             expect(res.status).toBe(403);
         });
@@ -270,7 +276,7 @@ describe('Reimbursement Flow (Business Rules)', () => {
         it('should return 403 when a collaborator tries to reject a reimbursement', async () => {
             const res = await request(app)
                 .post(`/reimbursements/${reimbursementId}/reject`)
-                .set('Authorization', `Bearer ${tokenColaborador}`);
+                .set('Cookie', [`pitang_token=${tokenColaborador}`]);
 
             expect(res.status).toBe(403);
         });
@@ -280,7 +286,7 @@ describe('Reimbursement Flow (Business Rules)', () => {
         beforeEach(async () => {
             const res = await request(app)
                 .post('/reimbursements')
-                .set('Authorization', `Bearer ${tokenColaborador}`)
+                .set('Cookie', [`pitang_token=${tokenColaborador}`])
                 .send({
                     descricao: 'Teste de Fluxo',
                     valor: 100,
@@ -295,7 +301,7 @@ describe('Reimbursement Flow (Business Rules)', () => {
         it('should allow GESTOR to access any reimbursement detail', async () => {
             const res = await request(app)
                 .get(`/reimbursements/${reimbursementId}`)
-                .set('Authorization', `Bearer ${tokenGestor}`);
+                .set('Cookie', [`pitang_token=${tokenGestor}`]);
 
             expect(res.status).toBe(200);
         });
@@ -304,11 +310,11 @@ describe('Reimbursement Flow (Business Rules)', () => {
         it('should require justification and change status to REJEITADO', async () => {
             await request(app)
                 .post(`/reimbursements/${reimbursementId}/submit`)
-                .set('Authorization', `Bearer ${tokenColaborador}`);
+                .set('Cookie', [`pitang_token=${tokenColaborador}`]);
 
             const res = await request(app)
                 .post(`/reimbursements/${reimbursementId}/reject`)
-                .set('Authorization', `Bearer ${tokenGestor}`)
+                .set('Cookie', [`pitang_token=${tokenGestor}`])
                 .send({ justificativaRejeicao: 'Nota fiscal ilegível' });
 
             expect(res.status).toBe(200);
@@ -319,18 +325,18 @@ describe('Reimbursement Flow (Business Rules)', () => {
         it('should allow manager to approve only if status is ENVIADO', async () => {
             const failRes = await request(app)
                 .post(`/reimbursements/${reimbursementId}/approve`)
-                .set('Authorization', `Bearer ${tokenGestor}`);
+                .set('Cookie', [`pitang_token=${tokenGestor}`]);
 
             expect(failRes.status).toBe(400);
 
             // Gestor test case, GESTOR approving a reimbursement
             await request(app)
                 .post(`/reimbursements/${reimbursementId}/submit`)
-                .set('Authorization', `Bearer ${tokenColaborador}`);
+                .set('Cookie', [`pitang_token=${tokenColaborador}`]);
 
             const successRes = await request(app)
                 .post(`/reimbursements/${reimbursementId}/approve`)
-                .set('Authorization', `Bearer ${tokenGestor}`);
+                .set('Cookie', [`pitang_token=${tokenGestor}`]);
 
             expect(successRes.status).toBe(200);
             expect(successRes.body.data.status).toBe('APROVADO');
@@ -340,11 +346,11 @@ describe('Reimbursement Flow (Business Rules)', () => {
         it('should return 400 when rejecting without a justification', async () => {
             await request(app)
                 .post(`/reimbursements/${reimbursementId}/submit`)
-                .set('Authorization', `Bearer ${tokenColaborador}`);
+                .set('Cookie', [`pitang_token=${tokenColaborador}`]);
 
             const res = await request(app)
                 .post(`/reimbursements/${reimbursementId}/reject`)
-                .set('Authorization', `Bearer ${tokenGestor}`)
+                .set('Cookie', [`pitang_token=${tokenGestor}`])
                 .send({ justificativaRejeicao: '' });
 
             expect(res.status).toBe(400);
@@ -354,7 +360,7 @@ describe('Reimbursement Flow (Business Rules)', () => {
         it('should return 403 when a manager tries to approve a reimbursement they created as a collaborator', async () => {
             const resCreate = await request(app)
                 .post('/reimbursements')
-                .set('Authorization', `Bearer ${tokenColaborador}`)
+                .set('Cookie', [`pitang_token=${tokenColaborador}`])
                 .send({
                     descricao: 'Meu Reembolso de Viagem',
                     valor: 150,
@@ -367,7 +373,7 @@ describe('Reimbursement Flow (Business Rules)', () => {
             const myUserId = resCreate.body.data.solicitanteId;
 
             // Successfully submitted as a collaborator
-            await request(app).post(`/reimbursements/${myId}/submit`).set('Authorization', `Bearer ${tokenColaborador}`);
+            await request(app).post(`/reimbursements/${myId}/submit`).set('Cookie', [`pitang_token=${tokenColaborador}`]);
 
             // Promoting the user to GESTOR
             await prisma.user.update({
@@ -378,7 +384,7 @@ describe('Reimbursement Flow (Business Rules)', () => {
             // Trying to approve the reimbursement as a GESTOR
             const resApprove = await request(app)
                 .post(`/reimbursements/${myId}/approve`)
-                .set('Authorization', `Bearer ${tokenColaborador}`);
+                .set('Cookie', [`pitang_token=${tokenColaborador}`]);
 
             expect(resApprove.status).toBe(403);
 
@@ -393,7 +399,7 @@ describe('Reimbursement Flow (Business Rules)', () => {
         it('should return 400 when a manager tries to approve a reimbursement that is not in ENVIADO status', async () => {
             const res = await request(app)
                 .post(`/reimbursements/${reimbursementId}/approve`)
-                .set('Authorization', `Bearer ${tokenGestor}`);
+                .set('Cookie', [`pitang_token=${tokenGestor}`]);
 
             expect(res.status).toBe(400);
         });
@@ -403,7 +409,7 @@ describe('Reimbursement Flow (Business Rules)', () => {
         beforeEach(async () => {
             const res = await request(app)
                 .post('/reimbursements')
-                .set('Authorization', `Bearer ${tokenColaborador}`)
+                .set('Cookie', [`pitang_token=${tokenColaborador}`])
                 .send({
                     descricao: 'Teste de Fluxo',
                     valor: 100,
@@ -418,19 +424,19 @@ describe('Reimbursement Flow (Business Rules)', () => {
         it('should allow FINANCEIRO to access any reimbursement detail', async () => {
             const res = await request(app)
                 .get(`/reimbursements/${reimbursementId}`)
-                .set('Authorization', `Bearer ${tokenFinanceiro}`);
+                .set('Cookie', [`pitang_token=${tokenFinanceiro}`]);
 
             expect(res.status).toBe(200);
         });
 
         // FINANCEIRO test case, FINANCEIRO marking a reimbursement as PAGO
         it('should allow FINANCEIRO to mark as PAGO only if APROVADO', async () => {
-            await request(app).post(`/reimbursements/${reimbursementId}/submit`).set('Authorization', `Bearer ${tokenColaborador}`);
-            await request(app).post(`/reimbursements/${reimbursementId}/approve`).set('Authorization', `Bearer ${tokenGestor}`);
+            await request(app).post(`/reimbursements/${reimbursementId}/submit`).set('Cookie', [`pitang_token=${tokenColaborador}`]);
+            await request(app).post(`/reimbursements/${reimbursementId}/approve`).set('Cookie', [`pitang_token=${tokenGestor}`]);
 
             const res = await request(app)
                 .post(`/reimbursements/${reimbursementId}/pay`)
-                .set('Authorization', `Bearer ${tokenFinanceiro}`);
+                .set('Cookie', [`pitang_token=${tokenFinanceiro}`]);
 
             expect(res.status).toBe(200);
             expect(res.body.data.status).toBe('PAGO');
@@ -440,7 +446,7 @@ describe('Reimbursement Flow (Business Rules)', () => {
         it('should return 400 when trying to pay a reimbursement that is not APROVADO', async () => {
             const res = await request(app)
                 .post(`/reimbursements/${reimbursementId}/pay`)
-                .set('Authorization', `Bearer ${tokenFinanceiro}`);
+                .set('Cookie', [`pitang_token=${tokenFinanceiro}`]);
 
             expect(res.status).toBe(400);
         });
@@ -449,7 +455,7 @@ describe('Reimbursement Flow (Business Rules)', () => {
         it('should return 403 when a financeiro tries to approve a reimbursement that is not in ENVIADO status', async () => {
             const res = await request(app)
                 .post(`/reimbursements/${reimbursementId}/approve`)
-                .set('Authorization', `Bearer ${tokenFinanceiro}`);
+                .set('Cookie', [`pitang_token=${tokenFinanceiro}`]);
 
             expect(res.status).toBe(403);
         });
@@ -460,7 +466,7 @@ describe('Reimbursement Flow (Business Rules)', () => {
         it('should allow admin to access any reimbursement detail', async () => {
             const res = await request(app)
                 .get(`/reimbursements/${reimbursementId}`)
-                .set('Authorization', `Bearer ${tokenAdmin}`);
+                .set('Cookie', [`pitang_token=${tokenAdmin}`]);
 
             expect(res.status).toBe(200);
         });
@@ -469,7 +475,7 @@ describe('Reimbursement Flow (Business Rules)', () => {
         it('should return 403 when an admin tries to create a reimbursement', async () => {
             const res = await request(app)
                 .post(`/reimbursements/`)
-                .set('Authorization', `Bearer ${tokenAdmin}`)
+                .set('Cookie', [`pitang_token=${tokenAdmin}`])
                 .send({
                     descricao: 'Reembolso de Viagem',
                     valor: 100,
@@ -484,7 +490,7 @@ describe('Reimbursement Flow (Business Rules)', () => {
         it('should return 403 when an admin tries to reject a reimbursement', async () => {
             const res = await request(app)
                 .post(`/reimbursements/${reimbursementId}/reject`)
-                .set('Authorization', `Bearer ${tokenAdmin}`)
+                .set('Cookie', [`pitang_token=${tokenAdmin}`])
                 .send({
                     justificativaRejeicao: 'Rejeitado pelo admin'
                 });
@@ -496,7 +502,7 @@ describe('Reimbursement Flow (Business Rules)', () => {
         it('should return 403 when an admin tries to approve a reimbursement', async () => {
             const res = await request(app)
                 .post(`/reimbursements/${reimbursementId}/approve`)
-                .set('Authorization', `Bearer ${tokenAdmin}`);
+                .set('Cookie', [`pitang_token=${tokenAdmin}`]);
 
             expect(res.status).toBe(403);
         });
@@ -505,7 +511,7 @@ describe('Reimbursement Flow (Business Rules)', () => {
         it('should return 403 when an admin tries to pay a reimbursement', async () => {
             const res = await request(app)
                 .post(`/reimbursements/${reimbursementId}/pay`)
-                .set('Authorization', `Bearer ${tokenAdmin}`);
+                .set('Cookie', [`pitang_token=${tokenAdmin}`]);
 
             expect(res.status).toBe(403);
         });

@@ -2,12 +2,7 @@ const base_url = import.meta.env.VITE_API_BASE_URL || 'http://localhost:3333';
 
 import FetcherError from './FetcherError';
 
-function getToken() {
-    return document.cookie
-        .split('; ')
-        .find((c) => c.startsWith('@pitang/accessToken='))
-        ?.split('=')[1];
-}
+
 
 function changeResource(resource: RequestInfo) {
     if (resource.toString().startsWith('http')) {
@@ -20,20 +15,17 @@ const fetcher = async <T = any>(
     resource: RequestInfo,
     options?: RequestInit,
 ): Promise<T> => {
-    const token = getToken();
-
     const response = await fetch(changeResource(resource), {
         ...options,
+        credentials: 'include',
         headers: {
             'Content-Type': 'application/json',
-            ...(token ? { Authorization: `Bearer ${token}` } : {}),
             ...options?.headers,
         },
     });
 
     if (!response.ok) {
         if (response.status === 401 && !resource.toString().includes('/auth/login')) {
-            document.cookie = "@pitang/accessToken=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT";
             localStorage.removeItem('@pitang/user');
             window.location.href = '/login?reason=expired';
         }
